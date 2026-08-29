@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dgi-platform
+  labels:
+    name: dgi-platform
+    environment: production

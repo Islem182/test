@@ -1,0 +1,249 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.dgi:dgi-platform >------------------------
+[INFO] Building dgi-platform 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.3.5:run (default-cli) > test-compile @ dgi-platform >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ dgi-platform ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ dgi-platform ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ dgi-platform ---
+[INFO] skip non existing resourceDirectory C:\Users\islem\Desktop\DGI-Online-Platform\backend\dgi-platform\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ dgi-platform ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 1 source file with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] <<< spring-boot:3.3.5:run (default-cli) < test-compile @ dgi-platform <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.3.5:run (default-cli) @ dgi-platform ---
+Downloading from central: https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-buildpack-platform/3.3.5/spring-boot-buildpack-platform-3.3.5.jar
+Progress (1): 0.9/289 kBProgress (1): 2.3/289 kBProgress (1): 3.6/289 kBProgress (1): 5.0/289 kBProgress (1): 6.4/289 kBProgress (1): 7.7/289 kBProgress (1): 9.1/289 kBProgress (1): 10/289 kB Progress (1): 11/289 kBProgress (1): 13/289 kBProgress (1): 14/289 kBProgress (1): 15/289 kBProgress (1): 17/289 kBProgress (1): 18/289 kBProgress (1): 20/289 kBProgress (1): 21/289 kBProgress (1): 22/289 kBProgress (1): 24/289 kBProgress (1): 25/289 kBProgress (1): 26/289 kBProgress (1): 28/289 kBProgress (1): 29/289 kBProgress (1): 31/289 kBProgress (1): 32/289 kBProgress (1): 33/289 kBProgress (1): 35/289 kBProgress (1): 36/289 kBProgress (1): 37/289 kBProgress (1): 39/289 kBProgress (1): 40/289 kBProgress (1): 41/289 kBProgress (1): 43/289 kBProgress (1): 44/289 kBProgress (1): 46/289 kBProgress (1): 47/289 kBProgress (1): 48/289 kBProgress (1): 50/289 kBProgress (1): 51/289 kBProgress (1): 52/289 kBProgress (1): 54/289 kBProgress (1): 55/289 kBProgress (1): 59/289 kBProgress (1): 64/289 kBProgress (1): 68/289 kBProgress (1): 72/289 kBProgress (1): 76/289 kBProgress (1): 81/289 kBProgress (1): 85/289 kBProgress (1): 89/289 kBProgress (1): 93/289 kBProgress (1): 97/289 kBProgress (1): 102/289 kBProgress (1): 106/289 kBProgress (1): 110/289 kBProgress (1): 114/289 kBProgress (1): 119/289 kBProgress (1): 123/289 kBProgress (1): 126/289 kBProgress (1): 130/289 kBProgress (1): 135/289 kBProgress (1): 139/289 kBProgress (1): 143/289 kBProgress (1): 147/289 kBProgress (1): 151/289 kBProgress (1): 156/289 kBProgress (1): 160/289 kBProgress (1): 164/289 kBProgress (1): 168/289 kBProgress (1): 173/289 kBProgress (1): 177/289 kBProgress (1): 181/289 kBProgress (1): 185/289 kBProgress (1): 189/289 kBProgress (1): 194/289 kBProgress (1): 198/289 kBProgress (1): 202/289 kBProgress (1): 206/289 kBProgress (1): 211/289 kBProgress (1): 215/289 kBProgress (1): 219/289 kBProgress (1): 223/289 kBProgress (1): 240/289 kBProgress (1): 256/289 kBProgress (1): 257/289 kBProgress (1): 274/289 kBProgress (1): 289 kB                        Downloaded from central: https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-buildpack-platform/3.3.5/spring-boot-buildpack-platform-3.3.5.jar (289 kB at 252 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/commons/commons-compress/1.25.0/commons-compress-1.25.0.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/httpcomponents/client5/httpclient5/5.3.1/httpclient5-5.3.1.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-loader-tools/3.3.5/spring-boot-loader-tools-3.3.5.jar
+Downloading from central: https://repo.maven.apache.org/maven2/io/micrometer/micrometer-observation/1.12.11/micrometer-observation-1.12.11.jar
+Downloading from central: https://repo.maven.apache.org/maven2/io/micrometer/micrometer-commons/1.12.11/micrometer-commons-1.12.11.jar
+Progress (1): 0/1.1 MBProgress (1): 0/1.1 MBProgress (1): 0/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (2): 0.1/1.1 MB | 0.9/464 kBProgress (2): 0.1/1.1 MB | 2.3/464 kBProgress (2): 0.1/1.1 MB | 2.3/464 kBProgress (2): 0.2/1.1 MB | 2.3/464 kBProgress (2): 0.2/1.1 MB | 2.3/464 kBProgress (2): 0.2/1.1 MB | 3.6/464 kBProgress (2): 0.2/1.1 MB | 5.0/464 kBProgress (2): 0.2/1.1 MB | 6.4/464 kBProgress (2): 0.2/1.1 MB | 7.7/464 kBProgress (2): 0.2/1.1 MB | 9.1/464 kBProgress (2): 0.2/1.1 MB | 10/464 kB Progress (3): 0.2/1.1 MB | 10/464 kB | 0.9/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 2.3/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 3.6/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 5.0/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 6.4/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 7.7/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 9.1/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 10/862 kB Progress (3): 0.2/1.1 MB | 10/464 kB | 12/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 13/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 15/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 16/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 10/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 12/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 13/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 15/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 16/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 17/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 19/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 20/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 21/464 kB | 17/862 kBProgress (3): 0.2/1.1 MB | 21/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 21/464 kB | 17/862 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 0.9/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 2.3/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 3.6/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 5.0/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 6.4/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 7.7/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 9.1/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 10/72 kB Progress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 12/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 13/72 kBProgress (4): 0.3/1.1 MB | 21/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 23/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 24/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 25/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 26/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 27/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 29/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 30/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 31/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 33/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 34/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 36/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 37/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 38/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 40/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 41/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 42/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 44/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 45/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 46/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 48/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 49/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 51/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 52/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 53/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 55/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 57/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 62/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 66/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 70/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 74/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 78/464 kB | 17/862 kB | 15/72 kBProgress (4): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kB | 0.9/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kB | 2.3/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kB | 3.6/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kB | 5.0/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kB | 6.4/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kB | 7.7/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kB | 9.1/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 15/72 kB | 10/47 kB Progress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 16/72 kB | 10/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 17/72 kB | 10/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 19/72 kB | 10/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 19/72 kB | 12/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 20/72 kB | 12/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 12/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 13/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 15/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 16/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 17/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 19/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 20/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 21/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 23/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 24/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 21/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 23/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 24/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 25/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 26/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 27/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 83/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 87/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 91/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 95/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 100/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 104/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 108/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 112/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 117/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 121/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 125/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 129/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 133/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 138/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 142/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 146/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 150/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 155/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 159/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 163/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 167/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 29/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 30/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 31/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 33/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 34/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 36/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 37/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 38/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 40/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 41/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 42/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 44/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 45/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 46/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 48/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 49/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 51/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 52/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 53/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 55/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 59/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 63/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 67/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 72/72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 172/464 kB | 17/862 kB | 72 kB | 26/47 kB   Progress (5): 0.3/1.1 MB | 176/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 180/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 184/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 188/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 193/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 197/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 201/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 205/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 210/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 214/464 kB | 17/862 kB | 72 kB | 26/47 kBProgress (5): 0.3/1.1 MB | 218/464 kB | 17/862 kB | 72 kB | 26/47 kB                                                                    Downloaded from central: https://repo.maven.apache.org/maven2/io/micrometer/micrometer-observation/1.12.11/micrometer-observation-1.12.11.jar (72 kB at 40 kB/s)
+Progress (4): 0.3/1.1 MB | 222/464 kB | 17/862 kB | 26/47 kBProgress (4): 0.3/1.1 MB | 239/464 kB | 17/862 kB | 26/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 26/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 27/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 28/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 29/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 30/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 31/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 33/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 34/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 36/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 36/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 37/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 38/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 40/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 41/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 42/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 44/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 45/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 46/47 kBProgress (4): 0.3/1.1 MB | 255/464 kB | 17/862 kB | 47 kB                                                            Downloaded from central: https://repo.maven.apache.org/maven2/io/micrometer/micrometer-commons/1.12.11/micrometer-commons-1.12.11.jar (47 kB at 23 kB/s)
+Progress (3): 0.3/1.1 MB | 271/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 288/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 304/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 304/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 304/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 319/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 336/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 352/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 369/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 369/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 385/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 385/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 401/464 kB | 17/862 kBProgress (3): 0.3/1.1 MB | 418/464 kB | 17/862 kBProgress (3): 0.4/1.1 MB | 418/464 kB | 17/862 kBProgress (3): 0.4/1.1 MB | 434/464 kB | 17/862 kBProgress (3): 0.4/1.1 MB | 451/464 kB | 17/862 kBProgress (3): 0.4/1.1 MB | 464 kB | 17/862 kB                                                 Downloaded from central: https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-loader-tools/3.3.5/spring-boot-loader-tools-3.3.5.jar (464 kB at 160 kB/s)
+Progress (2): 0.4/1.1 MB | 17/862 kBProgress (2): 0.4/1.1 MB | 17/862 kBProgress (2): 0.4/1.1 MB | 17/862 kBProgress (2): 0.4/1.1 MB | 17/862 kBProgress (2): 0.4/1.1 MB | 19/862 kBProgress (2): 0.4/1.1 MB | 20/862 kBProgress (2): 0.4/1.1 MB | 21/862 kBProgress (2): 0.4/1.1 MB | 23/862 kBProgress (2): 0.4/1.1 MB | 24/862 kBProgress (2): 0.4/1.1 MB | 26/862 kBProgress (2): 0.4/1.1 MB | 27/862 kBProgress (2): 0.4/1.1 MB | 28/862 kBProgress (2): 0.4/1.1 MB | 30/862 kBProgress (2): 0.4/1.1 MB | 31/862 kBProgress (2): 0.4/1.1 MB | 32/862 kBProgress (2): 0.4/1.1 MB | 34/862 kBProgress (2): 0.4/1.1 MB | 35/862 kBProgress (2): 0.4/1.1 MB | 36/862 kBProgress (2): 0.4/1.1 MB | 38/862 kBProgress (2): 0.4/1.1 MB | 39/862 kBProgress (2): 0.4/1.1 MB | 41/862 kBProgress (2): 0.4/1.1 MB | 42/862 kBProgress (2): 0.4/1.1 MB | 43/862 kBProgress (2): 0.4/1.1 MB | 45/862 kBProgress (2): 0.4/1.1 MB | 46/862 kBProgress (2): 0.4/1.1 MB | 47/862 kBProgress (2): 0.4/1.1 MB | 49/862 kBProgress (2): 0.4/1.1 MB | 50/862 kBProgress (2): 0.4/1.1 MB | 50/862 kBProgress (2): 0.5/1.1 MB | 50/862 kBProgress (2): 0.5/1.1 MB | 50/862 kBProgress (2): 0.5/1.1 MB | 52/862 kBProgress (2): 0.5/1.1 MB | 53/862 kBProgress (2): 0.5/1.1 MB | 54/862 kBProgress (2): 0.5/1.1 MB | 56/862 kBProgress (2): 0.5/1.1 MB | 57/862 kBProgress (2): 0.5/1.1 MB | 61/862 kBProgress (2): 0.5/1.1 MB | 65/862 kBProgress (2): 0.5/1.1 MB | 70/862 kBProgress (2): 0.5/1.1 MB | 74/862 kBProgress (2): 0.5/1.1 MB | 78/862 kBProgress (2): 0.5/1.1 MB | 82/862 kBProgress (2): 0.5/1.1 MB | 86/862 kBProgress (2): 0.5/1.1 MB | 86/862 kBProgress (2): 0.5/1.1 MB | 91/862 kBProgress (2): 0.5/1.1 MB | 95/862 kBProgress (2): 0.5/1.1 MB | 99/862 kBProgress (2): 0.5/1.1 MB | 103/862 kBProgress (2): 0.5/1.1 MB | 103/862 kBProgress (2): 0.5/1.1 MB | 108/862 kBProgress (2): 0.5/1.1 MB | 112/862 kBProgress (2): 0.5/1.1 MB | 116/862 kBProgress (2): 0.5/1.1 MB | 116/862 kBProgress (2): 0.5/1.1 MB | 120/862 kBProgress (2): 0.5/1.1 MB | 125/862 kBProgress (2): 0.5/1.1 MB | 129/862 kBProgress (2): 0.5/1.1 MB | 133/862 kBProgress (2): 0.5/1.1 MB | 133/862 kBProgress (2): 0.5/1.1 MB | 137/862 kBProgress (2): 0.5/1.1 MB | 141/862 kBProgress (2): 0.5/1.1 MB | 146/862 kBProgress (2): 0.5/1.1 MB | 150/862 kBProgress (2): 0.5/1.1 MB | 154/862 kBProgress (2): 0.5/1.1 MB | 158/862 kBProgress (2): 0.6/1.1 MB | 158/862 kBProgress (2): 0.6/1.1 MB | 163/862 kBProgress (2): 0.6/1.1 MB | 163/862 kBProgress (2): 0.6/1.1 MB | 167/862 kBProgress (2): 0.6/1.1 MB | 171/862 kBProgress (2): 0.6/1.1 MB | 175/862 kBProgress (2): 0.6/1.1 MB | 175/862 kBProgress (2): 0.6/1.1 MB | 180/862 kBProgress (2): 0.6/1.1 MB | 184/862 kBProgress (2): 0.6/1.1 MB | 188/862 kBProgress (2): 0.6/1.1 MB | 192/862 kBProgress (2): 0.6/1.1 MB | 196/862 kBProgress (2): 0.6/1.1 MB | 196/862 kBProgress (2): 0.6/1.1 MB | 201/862 kBProgress (2): 0.6/1.1 MB | 205/862 kBProgress (2): 0.6/1.1 MB | 205/862 kBProgress (2): 0.6/1.1 MB | 209/862 kBProgress (2): 0.6/1.1 MB | 213/862 kBProgress (2): 0.6/1.1 MB | 218/862 kBProgress (2): 0.6/1.1 MB | 222/862 kBProgress (2): 0.6/1.1 MB | 238/862 kBProgress (2): 0.6/1.1 MB | 238/862 kBProgress (2): 0.7/1.1 MB | 238/862 kBProgress (2): 0.7/1.1 MB | 255/862 kBProgress (2): 0.7/1.1 MB | 255/862 kBProgress (2): 0.7/1.1 MB | 271/862 kBProgress (2): 0.7/1.1 MB | 271/862 kBProgress (2): 0.7/1.1 MB | 271/862 kBProgress (2): 0.7/1.1 MB | 271/862 kBProgress (2): 0.7/1.1 MB | 287/862 kBProgress (2): 0.7/1.1 MB | 287/862 kBProgress (2): 0.7/1.1 MB | 304/862 kBProgress (2): 0.7/1.1 MB | 319/862 kBProgress (2): 0.8/1.1 MB | 319/862 kBProgress (2): 0.8/1.1 MB | 335/862 kBProgress (2): 0.8/1.1 MB | 352/862 kBProgress (2): 0.8/1.1 MB | 352/862 kBProgress (2): 0.8/1.1 MB | 368/862 kBProgress (2): 0.8/1.1 MB | 368/862 kBProgress (2): 0.8/1.1 MB | 385/862 kBProgress (2): 0.8/1.1 MB | 401/862 kBProgress (2): 0.8/1.1 MB | 401/862 kBProgress (2): 0.8/1.1 MB | 417/862 kBProgress (2): 0.8/1.1 MB | 434/862 kBProgress (2): 0.8/1.1 MB | 450/862 kBProgress (2): 0.8/1.1 MB | 466/862 kBProgress (2): 0.8/1.1 MB | 466/862 kBProgress (2): 0.8/1.1 MB | 483/862 kBProgress (2): 0.8/1.1 MB | 499/862 kBProgress (2): 0.8/1.1 MB | 516/862 kBProgress (2): 0.8/1.1 MB | 516/862 kBProgress (2): 0.8/1.1 MB | 532/862 kBProgress (2): 0.8/1.1 MB | 548/862 kBProgress (2): 0.8/1.1 MB | 565/862 kBProgress (2): 0.8/1.1 MB | 581/862 kBProgress (2): 0.9/1.1 MB | 581/862 kBProgress (2): 0.9/1.1 MB | 598/862 kBProgress (2): 0.9/1.1 MB | 614/862 kBProgress (2): 0.9/1.1 MB | 630/862 kBProgress (2): 0.9/1.1 MB | 647/862 kBProgress (2): 0.9/1.1 MB | 647/862 kBProgress (2): 0.9/1.1 MB | 663/862 kBProgress (2): 0.9/1.1 MB | 679/862 kBProgress (2): 0.9/1.1 MB | 696/862 kBProgress (2): 0.9/1.1 MB | 696/862 kBProgress (2): 0.9/1.1 MB | 712/862 kBProgress (2): 0.9/1.1 MB | 729/862 kBProgress (2): 0.9/1.1 MB | 745/862 kBProgress (2): 0.9/1.1 MB | 745/862 kBProgress (2): 0.9/1.1 MB | 761/862 kBProgress (2): 0.9/1.1 MB | 778/862 kBProgress (2): 0.9/1.1 MB | 794/862 kBProgress (2): 0.9/1.1 MB | 811/862 kBProgress (2): 0.9/1.1 MB | 827/862 kBProgress (2): 0.9/1.1 MB | 843/862 kBProgress (2): 0.9/1.1 MB | 843/862 kBProgress (2): 0.9/1.1 MB | 860/862 kBProgress (2): 0.9/1.1 MB | 862 kB                                     Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/httpcomponents/client5/httpclient5/5.3.1/httpclient5-5.3.1.jar (862 kB at 174 kB/s)
+Progress (1): 0.9/1.1 MBProgress (1): 1.0/1.1 MBProgress (1): 1.0/1.1 MBProgress (1): 1.0/1.1 MBProgress (1): 1.0/1.1 MBProgress (1): 1.0/1.1 MBProgress (1): 1.0/1.1 MBProgress (1): 1.1/1.1 MBProgress (1): 1.1/1.1 MBProgress (1): 1.1 MB                        Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/commons/commons-compress/1.25.0/commons-compress-1.25.0.jar (1.1 MB at 197 kB/s)
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-08-28T17:38:57.462+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] c.dgi.platform.DgiPlatformApplication    : Starting DgiPlatformApplication using Java 17.0.12 with PID 28636 (C:\Users\islem\Desktop\DGI-Online-Platform\backend\dgi-platform\target\classes started by islem in C:\Users\islem\Desktop\DGI-Online-Platform\backend\dgi-platform)
+2026-08-28T17:38:57.466+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] c.dgi.platform.DgiPlatformApplication    : No active profile set, falling back to 1 default profile: "default"
+2026-08-28T17:38:57.585+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-08-28T17:38:57.586+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-08-28T17:39:00.808+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-28T17:39:01.093+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 264 ms. Found 10 JPA repository interfaces.
+2026-08-28T17:39:02.888+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-08-28T17:39:02.916+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-08-28T17:39:02.916+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.31]
+2026-08-28T17:39:03.012+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-08-28T17:39:03.014+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 5425 ms
+2026-08-28T17:39:03.368+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-08-28T17:39:06.402+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@6aee2540
+2026-08-28T17:39:06.404+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-08-28T17:39:06.598+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-28T17:39:06.735+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2026-08-28T17:39:06.837+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-08-28T17:39:07.515+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-28T17:39:08.118+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-28T17:39:10.865+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: 
+    alter table if exists activities 
+       alter column address set data type TEXT
+Hibernate: 
+    alter table if exists chat_history 
+       alter column answer set data type TEXT
+Hibernate: 
+    alter table if exists chat_history 
+       alter column question set data type TEXT
+Hibernate: 
+    alter table if exists complaints 
+       alter column message set data type TEXT
+Hibernate: 
+    alter table if exists complaints 
+       alter column response set data type TEXT
+Hibernate: 
+    alter table if exists notifications 
+       alter column message set data type TEXT
+Hibernate: 
+    alter table if exists taxpayers 
+       alter column address set data type TEXT
+2026-08-28T17:39:20.049+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-28T17:39:21.495+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-08-28T17:39:21.496+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+2026-08-28T17:39:22.042+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-08-28T17:39:22.984+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-08-28T17:39:24.412+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : Unable to start LiveReload server
+2026-08-28T17:39:24.613+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
+2026-08-28T17:39:24.660+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] c.dgi.platform.DgiPlatformApplication    : Started DgiPlatformApplication in 27.876 seconds (process running for 28.792)
+2026-08-28T17:39:24.902+01:00  INFO 28636 --- [dgi-platform] [nio-8082-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-28T17:39:24.902+01:00  INFO 28636 --- [dgi-platform] [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-08-28T17:39:24.904+01:00  INFO 28636 --- [dgi-platform] [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-08-28T17:41:18.728+01:00  INFO 28636 --- [dgi-platform] [   File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 103 class path changes (0 additions, 102 deletions, 1 modification)
+2026-08-28T17:41:19.062+01:00  INFO 28636 --- [dgi-platform] [       Thread-1] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-28T17:41:19.068+01:00  INFO 28636 --- [dgi-platform] [       Thread-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-08-28T17:41:20.652+01:00  INFO 28636 --- [dgi-platform] [       Thread-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-08-28T17:41:20.785+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] c.dgi.platform.DgiPlatformApplication    : Starting DgiPlatformApplication using Java 17.0.12 with PID 28636 (C:\Users\islem\Desktop\DGI-Online-Platform\backend\dgi-platform\target\classes started by islem in C:\Users\islem\Desktop\DGI-Online-Platform\backend\dgi-platform)
+2026-08-28T17:41:20.785+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] c.dgi.platform.DgiPlatformApplication    : No active profile set, falling back to 1 default profile: "default"
+2026-08-28T17:41:21.494+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-28T17:41:21.535+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 40 ms. Found 2 JPA repository interfaces.
+2026-08-28T17:41:21.835+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-08-28T17:41:21.836+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-08-28T17:41:21.836+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.31]
+2026-08-28T17:41:21.878+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-08-28T17:41:21.878+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1090 ms
+2026-08-28T17:41:22.082+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-08-28T17:41:25.573+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection org.postgresql.jdbc.PgConnection@347577aa
+2026-08-28T17:41:25.574+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-08-28T17:41:25.684+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-28T17:41:25.691+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-08-28T17:41:25.713+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-28T17:41:25.803+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-28T17:41:26.516+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: 
+    alter table if exists activities 
+       alter column address set data type TEXT
+Hibernate: 
+    alter table if exists chat_history 
+       alter column answer set data type TEXT
+Hibernate: 
+    alter table if exists chat_history 
+       alter column question set data type TEXT
+Hibernate: 
+    alter table if exists complaints 
+       alter column message set data type TEXT
+Hibernate: 
+    alter table if exists complaints 
+       alter column response set data type TEXT
+Hibernate: 
+    alter table if exists notifications 
+       alter column message set data type TEXT
+Hibernate: 
+    alter table if exists taxpayers 
+       alter column address set data type TEXT
+2026-08-28T17:41:29.679+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-28T17:41:29.699+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'agentController' defined in file [C:\Users\islem\Desktop\DGI-Online-Platform\backend\dgi-platform\target\classes\com\dgi\platform\controller\AgentController.class]: Unsatisfied dependency expressed through constructor parameter 0: No qualifying bean of type 'com.dgi.platform.service.TaxApplicationService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+2026-08-28T17:41:29.700+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-08-28T17:41:29.701+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-08-28T17:41:30.245+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2026-08-28T17:41:30.246+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-08-28T17:41:30.260+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-08-28T17:41:30.297+01:00 ERROR 28636 --- [dgi-platform] [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.dgi.platform.controller.AgentController required a bean of type 'com.dgi.platform.service.TaxApplicationService' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'com.dgi.platform.service.TaxApplicationService' in your configuration.
+
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-08-28T17:41:32.029+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] c.dgi.platform.DgiPlatformApplication    : Starting DgiPlatformApplication using Java 17.0.12 with PID 28636 (C:\Users\islem\Desktop\DGI-Online-Platform\backend\dgi-platform\target\classes started by islem in C:\Users\islem\Desktop\DGI-Online-Platform\backend\dgi-platform)
+2026-08-28T17:41:32.029+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] c.dgi.platform.DgiPlatformApplication    : No active profile set, falling back to 1 default profile: "default"
+2026-08-28T17:41:33.318+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-08-28T17:41:33.435+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 116 ms. Found 10 JPA repository interfaces.
+2026-08-28T17:41:33.936+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8082 (http)
+2026-08-28T17:41:33.937+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-08-28T17:41:33.938+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.31]
+2026-08-28T17:41:33.999+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.a.c.c.C.[Tomcat-1].[localhost].[/]     : Initializing Spring embedded WebApplicationContext
+2026-08-28T17:41:34.000+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1965 ms
+2026-08-28T17:41:34.390+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-08-28T17:41:34.975+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection org.postgresql.jdbc.PgConnection@77c97f7
+2026-08-28T17:41:34.975+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-08-28T17:41:35.066+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-08-28T17:41:35.074+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-08-28T17:41:35.094+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-08-28T17:41:35.175+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-08-28T17:41:35.799+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: 
+    alter table if exists activities 
+       alter column address set data type TEXT
+Hibernate: 
+    alter table if exists chat_history 
+       alter column answer set data type TEXT
+Hibernate: 
+    alter table if exists chat_history 
+       alter column question set data type TEXT
+Hibernate: 
+    alter table if exists complaints 
+       alter column message set data type TEXT
+Hibernate: 
+    alter table if exists complaints 
+       alter column response set data type TEXT
+Hibernate: 
+    alter table if exists notifications 
+       alter column message set data type TEXT
+Hibernate: 
+    alter table if exists taxpayers 
+       alter column address set data type TEXT
+2026-08-28T17:41:39.229+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-08-28T17:41:39.956+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-08-28T17:41:39.957+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+2026-08-28T17:41:40.410+01:00  WARN 28636 --- [dgi-platform] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-08-28T17:41:41.193+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-08-28T17:41:42.309+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2026-08-28T17:41:42.369+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8082 (http) with context path '/'
+2026-08-28T17:41:42.400+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] c.dgi.platform.DgiPlatformApplication    : Started DgiPlatformApplication in 10.473 seconds (process running for 166.532)
+2026-08-28T17:41:42.416+01:00  INFO 28636 --- [dgi-platform] [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+2026-08-28T18:19:02.588+01:00  WARN 28636 --- [dgi-platform] [l-3 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Thread starvation or clock leap detected (housekeeper delta=23m27s280ms14µs400ns).
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  42:23 min
+[INFO] Finished at: 2026-08-28T18:21:01+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.3.5:run (default-cli) on project dgi-platform: Process terminated with exit code: 1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
