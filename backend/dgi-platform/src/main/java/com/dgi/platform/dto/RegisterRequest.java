@@ -40,7 +40,4 @@ public class RegisterRequest {
     private String passport;
     private LocalDate birthDate;
     private String address;
-
-    @Builder.Default
-    private String role = "TAXPAYER"; // TAXPAYER, AGENT, ADMIN
 }

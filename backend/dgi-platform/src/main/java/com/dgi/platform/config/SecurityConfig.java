@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints — no authentication required
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/v3/api-docs/**",
@@ -77,6 +78,11 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/api/documents/certificate/**"
                         ).permitAll()
+                        // Admin-only endpoints — ROLE_ADMIN required at the URL level
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // Agent endpoints — ROLE_AGENT or ROLE_ADMIN
+                        .requestMatchers("/api/agent/**").hasAnyRole("AGENT", "ADMIN")
+                        // All other endpoints require a valid JWT
                         .anyRequest().authenticated()
                 );
 

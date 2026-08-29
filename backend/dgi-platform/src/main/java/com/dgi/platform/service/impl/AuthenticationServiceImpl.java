@@ -57,32 +57,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .roles(new HashSet<>())
                 .build();
 
-        RoleName targetRoleName;
-        try {
-            targetRoleName = RoleName.valueOf("ROLE_" + registerRequest.getRole().toUpperCase().replace("ROLE_", ""));
-        } catch (IllegalArgumentException e) {
-            targetRoleName = RoleName.ROLE_TAXPAYER;
-        }
-
-        Role userRole = roleRepository.findByName(targetRoleName)
+        // Role is always TAXPAYER for public registration — never trust client input
+        Role userRole = roleRepository.findByName(RoleName.ROLE_TAXPAYER)
                 .orElseGet(() -> roleRepository.save(Role.builder().name(RoleName.ROLE_TAXPAYER).build()));
 
         user.getRoles().add(userRole);
         User savedUser = userRepository.save(user);
 
-        // If user is TAXPAYER, create associated Taxpayer profile
-        if (targetRoleName == RoleName.ROLE_TAXPAYER) {
-            Taxpayer taxpayer = Taxpayer.builder()
-                    .user(savedUser)
-                    .firstName(registerRequest.getFirstName())
-                    .lastName(registerRequest.getLastName())
-                    .cin(registerRequest.getCin())
-                    .passport(registerRequest.getPassport())
-                    .birthDate(registerRequest.getBirthDate())
-                    .address(registerRequest.getAddress())
-                    .build();
-            taxpayerRepository.save(taxpayer);
-        }
+        // Always create the associated Taxpayer profile for registered users
+        Taxpayer taxpayer = Taxpayer.builder()
+                .user(savedUser)
+                .firstName(registerRequest.getFirstName())
+                .lastName(registerRequest.getLastName())
+                .cin(registerRequest.getCin())
+                .passport(registerRequest.getPassport())
+                .birthDate(registerRequest.getBirthDate())
+                .address(registerRequest.getAddress())
+                .build();
+        taxpayerRepository.save(taxpayer);
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

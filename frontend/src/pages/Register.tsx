@@ -7,10 +7,6 @@ import {
   Alert,
   Link,
   Grid,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -28,7 +24,6 @@ export const Register: React.FC = () => {
     cin: '',
     passport: '',
     address: '',
-    role: 'TAXPAYER',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,7 +54,7 @@ export const Register: React.FC = () => {
         Inscription en Ligne
       </Typography>
       <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-        Créez votre compte Contribuable ou Agent DGI
+        Créez votre compte Contribuable DGI
       </Typography>
 
       {error && (
@@ -162,22 +157,6 @@ export const Register: React.FC = () => {
             multiline
             rows={2}
           />
-        </Grid>
-
-        <Grid size={{ xs: 12 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Rôle du Compte</InputLabel>
-            <Select
-              name="role"
-              value={formData.role}
-              label="Rôle du Compte"
-              onChange={handleChange as any}
-            >
-              <MenuItem value="TAXPAYER">Contribuable (Taxpayer)</MenuItem>
-              <MenuItem value="AGENT">Agent Fiscal DGI</MenuItem>
-              <MenuItem value="ADMIN">Administrateur Système</MenuItem>
-            </Select>
-          </FormControl>
         </Grid>
       </Grid>
 

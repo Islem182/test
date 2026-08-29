@@ -3,7 +3,9 @@ import type { ApiResponse, JwtResponse } from '../types';
 
 export const authService = {
   async register(data: Record<string, any>): Promise<JwtResponse> {
-    const res = await apiClient.post<ApiResponse<JwtResponse>>('/api/auth/register', data);
+    // Explicitly strip any role field — role is always assigned server-side as TAXPAYER
+    const { role: _role, ...payload } = data;
+    const res = await apiClient.post<ApiResponse<JwtResponse>>('/api/auth/register', payload);
     return res.data.data;
   },
 
