@@ -1,14 +1,9 @@
 package com.dgi.platform.service.impl;
 
 import com.dgi.platform.dto.*;
-import com.dgi.platform.entity.Role;
-import com.dgi.platform.entity.RoleName;
-import com.dgi.platform.entity.Taxpayer;
 import com.dgi.platform.entity.User;
 import com.dgi.platform.exception.BadRequestException;
 import com.dgi.platform.exception.ResourceNotFoundException;
-import com.dgi.platform.repository.RoleRepository;
-import com.dgi.platform.repository.TaxpayerRepository;
 import com.dgi.platform.repository.UserRepository;
 import com.dgi.platform.security.JwtTokenProvider;
 import com.dgi.platform.security.UserPrincipal;
@@ -17,14 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashSet;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,103 +23,66 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final TaxpayerRepository taxpayerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
 
     @Override
     @Transactional
-    public JwtResponse register(RegisterRequest registerRequest) {
-        if (userRepository.existsByUsername(registerRequest.getUsername())) {
+    public JwtResponse register(RegisterRequest req) {
+        if (userRepository.existsByUsername(req.getUsername()))
             throw new BadRequestException("Username is already taken!");
-        }
-
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+        if (userRepository.existsByEmail(req.getEmail()))
             throw new BadRequestException("Email Address already in use!");
-        }
+
+        // Blank CIN/Passport → null to avoid unique constraint violations
+        String cin      = blank(req.getCin())      ? null : req.getCin().trim();
+        String passport = blank(req.getPassport()) ? null : req.getPassport().trim();
 
         User user = User.builder()
-                .username(registerRequest.getUsername())
-                .email(registerRequest.getEmail())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .phone(registerRequest.getPhone())
+                .username(req.getUsername())
+                .email(req.getEmail())
+                .password(passwordEncoder.encode(req.getPassword()))
+                .firstName(req.getFirstName())
+                .lastName(req.getLastName())
+                .cin(cin)
+                .passport(passport)
+                .birthDate(req.getBirthDate())
+                .address(req.getAddress())
+                .phone(req.getPhone())
+                .isAdmin(false)          // registrations are NEVER admin
                 .enabled(true)
-                .roles(new HashSet<>())
                 .build();
 
-        // Role is always TAXPAYER for public registration — never trust client input
-        Role userRole = roleRepository.findByName(RoleName.ROLE_TAXPAYER)
-                .orElseGet(() -> roleRepository.save(Role.builder().name(RoleName.ROLE_TAXPAYER).build()));
+        User saved = userRepository.save(user);
 
-        user.getRoles().add(userRole);
-        User savedUser = userRepository.save(user);
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
-        // Always create the associated Taxpayer profile for registered users
-        Taxpayer taxpayer = Taxpayer.builder()
-                .user(savedUser)
-                .firstName(registerRequest.getFirstName())
-                .lastName(registerRequest.getLastName())
-                .cin(registerRequest.getCin())
-                .passport(registerRequest.getPassport())
-                .birthDate(registerRequest.getBirthDate())
-                .address(registerRequest.getAddress())
-                .build();
-        taxpayerRepository.save(taxpayer);
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        registerRequest.getUsername(),
-                        registerRequest.getPassword()
-                )
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
-        String refreshToken = tokenProvider.generateRefreshToken(savedUser.getUsername());
-
-        List<String> roles = savedUser.getRoles().stream()
-                .map(role -> role.getName().name())
-                .toList();
+        String jwt     = tokenProvider.generateToken(auth);
+        String refresh = tokenProvider.generateRefreshToken(saved.getUsername());
 
         return JwtResponse.builder()
-                .accessToken(jwt)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .id(savedUser.getId())
-                .username(savedUser.getUsername())
-                .email(savedUser.getEmail())
-                .roles(roles)
+                .accessToken(jwt).refreshToken(refresh).tokenType("Bearer")
+                .id(saved.getId()).username(saved.getUsername())
+                .email(saved.getEmail()).isAdmin(false)
                 .build();
     }
 
     @Override
-    public JwtResponse login(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsernameOrEmail(),
-                        loginRequest.getPassword()
-                )
-        );
+    public JwtResponse login(LoginRequest req) {
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(req.getUsernameOrEmail(), req.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        String jwt = tokenProvider.generateToken(authentication);
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        String refreshToken = tokenProvider.generateRefreshToken(userPrincipal.getUsername());
-
-        List<String> roles = userPrincipal.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
+        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+        String jwt     = tokenProvider.generateToken(auth);
+        String refresh = tokenProvider.generateRefreshToken(principal.getUsername());
 
         return JwtResponse.builder()
-                .accessToken(jwt)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .id(userPrincipal.getId())
-                .username(userPrincipal.getUsername())
-                .email(userPrincipal.getEmail())
-                .roles(roles)
+                .accessToken(jwt).refreshToken(refresh).tokenType("Bearer")
+                .id(principal.getId()).username(principal.getUsername())
+                .email(principal.getEmail()).isAdmin(principal.isAdmin())
                 .build();
     }
 
@@ -138,51 +92,42 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public JwtResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
-        String requestRefreshToken = refreshTokenRequest.getRefreshToken();
-        if (tokenProvider.validateToken(requestRefreshToken)) {
-            String username = tokenProvider.getUsernameFromJWT(requestRefreshToken);
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
+    public JwtResponse refreshToken(RefreshTokenRequest req) {
+        if (!tokenProvider.validateToken(req.getRefreshToken()))
+            throw new BadRequestException("Invalid or expired Refresh Token");
 
-            List<String> roles = user.getRoles().stream()
-                    .map(role -> role.getName().name())
-                    .toList();
+        String username = tokenProvider.getUsernameFromJWT(req.getRefreshToken());
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
 
-            String newAccessToken = tokenProvider.generateTokenFromUsername(user.getUsername(), user.getId(), String.join(",", roles));
-            String newRefreshToken = tokenProvider.generateRefreshToken(user.getUsername());
+        String newAccess  = tokenProvider.generateTokenFromUsername(user.getUsername(), user.getId(), user.isAdmin());
+        String newRefresh = tokenProvider.generateRefreshToken(user.getUsername());
 
-            return JwtResponse.builder()
-                    .accessToken(newAccessToken)
-                    .refreshToken(newRefreshToken)
-                    .tokenType("Bearer")
-                    .id(user.getId())
-                    .username(user.getUsername())
-                    .email(user.getEmail())
-                    .roles(roles)
-                    .build();
-        }
-        throw new BadRequestException("Invalid or expired Refresh Token");
+        return JwtResponse.builder()
+                .accessToken(newAccess).refreshToken(newRefresh).tokenType("Bearer")
+                .id(user.getId()).username(user.getUsername())
+                .email(user.getEmail()).isAdmin(user.isAdmin())
+                .build();
     }
 
     @Override
-    public void forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
-        User user = userRepository.findByEmail(forgotPasswordRequest.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", forgotPasswordRequest.getEmail()));
-        // Simulated password reset token generated/sent to user email
+    public void forgotPassword(ForgotPasswordRequest req) {
+        userRepository.findByEmail(req.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", req.getEmail()));
+        // Password reset email sending (simulated)
     }
 
     @Override
     @Transactional
-    public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
-        if (!tokenProvider.validateToken(resetPasswordRequest.getToken())) {
+    public void resetPassword(ResetPasswordRequest req) {
+        if (!tokenProvider.validateToken(req.getToken()))
             throw new BadRequestException("Invalid or expired password reset token");
-        }
-        String username = tokenProvider.getUsernameFromJWT(resetPasswordRequest.getToken());
+        String username = tokenProvider.getUsernameFromJWT(req.getToken());
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
-
-        user.setPassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
+        user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         userRepository.save(user);
     }
+
+    private boolean blank(String s) { return s == null || s.isBlank(); }
 }

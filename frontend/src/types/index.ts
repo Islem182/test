@@ -1,31 +1,28 @@
-export type UserRole = 'ROLE_TAXPAYER' | 'ROLE_AGENT' | 'ROLE_ADMIN' | 'TAXPAYER' | 'AGENT' | 'ADMIN';
+// ── Auth ──────────────────────────────────────────────────────────────────────
 
 export type ApplicationStatus = 'PENDING' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED';
+export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+export type ComplaintStatus    = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 
-export type DocumentType = 
-  | 'CIN_COPY' 
-  | 'PASSPORT_COPY' 
-  | 'PATENTE' 
-  | 'COMMERCIAL_REGISTER' 
-  | 'TAX_RETURN' 
+export type DocumentType =
+  | 'CIN_COPY'
+  | 'PASSPORT_COPY'
+  | 'CERTIFICAT_IMMATRICULATION'
+  | 'PATENTE'
+  | 'COMMERCIAL_REGISTER'
+  | 'TAX_RETURN'
   | 'OTHER';
 
-export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
-
-export type ComplaintStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-
-export interface User {
+/** Flat user — no separate Taxpayer entity, no role array. */
+export interface UserProfile {
   id: number;
   username: string;
   email: string;
   phone?: string;
   enabled: boolean;
+  isAdmin: boolean;
   createdAt?: string;
-  roles: string[];
-}
-
-export interface TaxpayerProfile {
-  taxpayerId?: number;
+  // Identity / taxpayer fields
   firstName?: string;
   lastName?: string;
   cin?: string;
@@ -36,8 +33,6 @@ export interface TaxpayerProfile {
   fiscalNumber?: string;
 }
 
-export interface UserProfile extends User, TaxpayerProfile {}
-
 export interface JwtResponse {
   accessToken: string;
   refreshToken: string;
@@ -45,7 +40,7 @@ export interface JwtResponse {
   id: number;
   username: string;
   email: string;
-  roles: string[];
+  isAdmin: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -54,6 +49,8 @@ export interface ApiResponse<T> {
   data: T;
   timestamp: string;
 }
+
+// ── Domain ────────────────────────────────────────────────────────────────────
 
 export interface Activity {
   id?: number;
@@ -76,7 +73,7 @@ export interface DocumentItem {
 
 export interface TaxApplication {
   id: number;
-  taxpayerId: number;
+  userId: number;
   taxpayerName: string;
   status: ApplicationStatus;
   createdDate: string;
@@ -87,8 +84,8 @@ export interface TaxApplication {
 
 export interface Complaint {
   id: number;
-  taxpayerId: number;
-  taxpayerName: string;
+  userId: number;
+  userName: string;
   subject: string;
   message: string;
   status: ComplaintStatus;
@@ -111,14 +108,101 @@ export interface ChatMessage {
   timestamp: string;
 }
 
-export interface OcrResult {
-  cinNumber?: string;
-  fullName?: string;
-  birthDate?: string;
-  address?: string;
+// ── OCR ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Mirrors backend OcrVerificationResponse.
+ * extractedData keys:
+ *   CIN      → cinNumber, firstName, lastName, birthDate, address
+ *   PASSPORT → passportNumber, firstName, lastName, birthDate, nationality
+ *   CERTIFICAT_IMMATRICULATION → companyName, fiscalNumber, businessType,
+ *                                 registrationNumber, registrationDate, address
+ */
+export interface OcrVerificationResponse {
+  verification: 'SUCCESS' | 'PARTIAL' | 'FAILED';
   confidenceScore: number;
   documentType: string;
+  extractedData: Record<string, string>;
+  differences: string[];
+  statusMessage: string;
 }
+
+// ── OCR Verification Report (Step 4) ─────────────────────────────────────────
+
+/** Status for a single extracted field. */
+export type OcrFieldStatus = 'VALID' | 'MISSING' | 'INVALID';
+
+/** Match status between two documents. */
+export type IdentityMatchStatus = 'MATCH' | 'POSSIBLE_MATCH' | 'MISMATCH' | 'UNABLE_TO_COMPARE';
+
+/** Overall document/report status. */
+export type OverallStatus = 'VALID' | 'INVALID' | 'PARTIAL';
+
+/** Single field result inside a document section. */
+export interface OcrFieldResult {
+  value: string | null;
+  status: OcrFieldStatus;
+  message?: string;
+}
+
+/** CIN document verification section. */
+export interface CinVerification {
+  numeroCin: OcrFieldResult;
+  nom: OcrFieldResult;
+  prenom: OcrFieldResult;
+  adresse: OcrFieldResult;
+  documentStatus: OverallStatus;
+}
+
+/** Passport document verification section. */
+export interface PassportVerification {
+  numeroPassport: OcrFieldResult;
+  nom: OcrFieldResult;
+  prenom: OcrFieldResult;
+  identityCompatibility: IdentityMatchStatus;
+  compatibilityScore: number;
+  documentStatus: OverallStatus;
+}
+
+/** Certificat d'immatriculation verification section. */
+export interface CertificatVerification {
+  dateDebutActivite: OcrFieldResult;
+  denominationSociale: OcrFieldResult;
+  formeJuridique: OcrFieldResult;
+  siegeSocial: OcrFieldResult;
+  secteurActivite: OcrFieldResult;
+  documentStatus: OverallStatus;
+}
+
+/** Full structured verification report returned by POST /api/ocr/verify-documents. */
+export interface OcrVerificationReport {
+  cin: CinVerification;
+  passport: PassportVerification;
+  commercialRegistration: CertificatVerification;
+  overallStatus: OverallStatus;
+  identityConsistency: IdentityMatchStatus;
+  summary: string;
+}
+
+// ── Cross-document comparison (legacy — used by NewApplication comparison table) ──
+
+export type ComparisonStatus = 'MATCH' | 'MISMATCH' | 'PENDING' | 'MISSING';
+
+export interface FieldComparison {
+  label: string;
+  sourceA: string | undefined;
+  sourceALabel: string;
+  sourceB: string | undefined;
+  sourceBLabel: string;
+  status: ComparisonStatus;
+}
+
+export interface CrossDocumentComparison {
+  fields: FieldComparison[];
+  allMatch: boolean;
+}
+
+// ── Misc ──────────────────────────────────────────────────────────────────────
 
 export interface FaceVerificationResult {
   matched: boolean;

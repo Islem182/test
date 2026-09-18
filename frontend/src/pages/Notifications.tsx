@@ -17,31 +17,19 @@ import type { NotificationItem, ApiResponse } from '../types';
 
 export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
+        setError(false);
         const res = await apiClient.get<ApiResponse<NotificationItem[]>>('/api/notifications');
         if (res.data?.data) {
           setNotifications(res.data.data);
         }
       } catch {
-        setNotifications([
-          {
-            id: 1,
-            title: 'Dossier d\'Immatriculation Reçu',
-            message: 'Votre dossier d\'immatriculation fiscale #1042 a été bien reçu par nos services.',
-            readStatus: true,
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: 2,
-            title: 'Matricule Fiscal Généré !',
-            message: 'Félicitations! Votre matricule fiscal officiel 1548962/A/M/000 a été généré.',
-            readStatus: false,
-            createdAt: new Date(Date.now() - 3600000).toISOString(),
-          },
-        ]);
+        setError(true);
+        setNotifications([]);
       }
     };
 
@@ -71,7 +59,14 @@ export const Notifications: React.FC = () => {
       <Card variant="outlined" sx={{ borderRadius: 3 }}>
         <CardContent sx={{ p: 0 }}>
           <List disablePadding>
-            {notifications.map((n) => (
+            {notifications.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  {error ? 'Could not load notifications. Please try again later.' : 'No notifications yet.'}
+                </Typography>
+              </Box>
+            ) : (
+            notifications.map((n) => (
               <React.Fragment key={n.id}>
                 <ListItem
                   sx={{
@@ -109,7 +104,8 @@ export const Notifications: React.FC = () => {
                 </ListItem>
                 <Divider />
               </React.Fragment>
-            ))}
+            ))
+            )}
           </List>
         </CardContent>
       </Card>

@@ -8,11 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "complaints")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Complaint {
 
     @Id
@@ -20,8 +16,8 @@ public class Complaint {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "taxpayer_id", nullable = false)
-    private Taxpayer taxpayer;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false, length = 200)
     private String subject;

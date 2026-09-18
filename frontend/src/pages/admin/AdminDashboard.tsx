@@ -18,7 +18,7 @@ const AdminDashboard: React.FC = () => {
           userService.getAllUsers().catch(() => []),
           applicationService.getAllApplications().catch(() => [] as TaxApplication[]),
         ]);
-        const agents = users.filter((u) => u.roles?.some((r) => r.includes('AGENT'))).length;
+        const agents = users.filter((u) => u.isAdmin).length;
         const approved = (apps as TaxApplication[]).filter((a) => a.status === 'APPROVED').length;
         setStats({ users: users.length, agents, applications: (apps as TaxApplication[]).length, approved });
       } catch { /* ignore */ }

@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/agent")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('AGENT') or hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Agent Portal & Review Workflow", description = "Tax Agent application review, approval/rejection, and verification handling")
 public class AgentController {
 

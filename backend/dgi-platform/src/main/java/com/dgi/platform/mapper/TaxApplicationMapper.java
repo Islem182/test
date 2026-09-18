@@ -14,48 +14,48 @@ import java.util.stream.Collectors;
 @Component
 public class TaxApplicationMapper {
 
-    public TaxApplicationResponse toResponse(TaxApplication application) {
-        if (application == null) return null;
+    public TaxApplicationResponse toResponse(TaxApplication app) {
+        if (app == null) return null;
 
-        String taxpayerName = application.getTaxpayer() != null ?
-                application.getTaxpayer().getFirstName() + " " + application.getTaxpayer().getLastName() : null;
+        String name = null;
+        if (app.getUser() != null) {
+            String first = app.getUser().getFirstName();
+            String last  = app.getUser().getLastName();
+            if (first != null || last != null)
+                name = ((first != null ? first : "") + " " + (last != null ? last : "")).trim();
+        }
 
         return TaxApplicationResponse.builder()
-                .id(application.getId())
-                .taxpayerId(application.getTaxpayer() != null ? application.getTaxpayer().getId() : null)
-                .taxpayerName(taxpayerName)
-                .status(application.getStatus())
-                .createdDate(application.getCreatedDate())
-                .updatedDate(application.getUpdatedDate())
-                .activities(application.getActivities() != null ?
-                        application.getActivities().stream().map(this::toActivityDto).collect(Collectors.toList()) : Collections.emptyList())
-                .documents(application.getDocuments() != null ?
-                        application.getDocuments().stream().map(this::toDocumentDto).collect(Collectors.toList()) : Collections.emptyList())
+                .id(app.getId())
+                .userId(app.getUser() != null ? app.getUser().getId() : null)
+                .taxpayerName(name)
+                .status(app.getStatus())
+                .createdDate(app.getCreatedDate())
+                .updatedDate(app.getUpdatedDate())
+                .activities(app.getActivities() != null
+                        ? app.getActivities().stream().map(this::toActivityDto).collect(Collectors.toList())
+                        : Collections.emptyList())
+                .documents(app.getDocuments() != null
+                        ? app.getDocuments().stream().map(this::toDocumentDto).collect(Collectors.toList())
+                        : Collections.emptyList())
                 .build();
     }
 
-    public ActivityDto toActivityDto(Activity activity) {
-        if (activity == null) return null;
-
+    public ActivityDto toActivityDto(Activity a) {
+        if (a == null) return null;
         return ActivityDto.builder()
-                .id(activity.getId())
-                .businessName(activity.getBusinessName())
-                .businessType(activity.getBusinessType())
-                .sector(activity.getSector())
-                .address(activity.getAddress())
-                .startDate(activity.getStartDate())
+                .id(a.getId()).businessName(a.getBusinessName())
+                .businessType(a.getBusinessType()).sector(a.getSector())
+                .address(a.getAddress()).startDate(a.getStartDate())
                 .build();
     }
 
-    public DocumentDto toDocumentDto(Document document) {
-        if (document == null) return null;
-
+    public DocumentDto toDocumentDto(Document d) {
+        if (d == null) return null;
         return DocumentDto.builder()
-                .id(document.getId())
-                .type(document.getType())
-                .filePath(document.getFilePath())
-                .uploadDate(document.getUploadDate())
-                .verificationStatus(document.getVerificationStatus())
+                .id(d.getId()).type(d.getType())
+                .filePath(d.getFilePath()).uploadDate(d.getUploadDate())
+                .verificationStatus(d.getVerificationStatus())
                 .build();
     }
 }

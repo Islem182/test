@@ -19,7 +19,7 @@ import {
 } from '@mui/icons-material';
 import { FileUploader } from '../components/FileUploader';
 import { useAuth } from '../context/AuthContext';
-import { DocumentItem } from '../types';
+import type { DocumentItem } from '../types';
 
 export const Documents: React.FC = () => {
   const { user } = useAuth();
@@ -49,7 +49,7 @@ export const Documents: React.FC = () => {
   };
 
   const handleDownloadCertificate = () => {
-    window.open(`http://localhost:8082/api/documents/certificate/${user?.taxpayerId || 1}`, '_blank');
+    window.open(`http://localhost:8082/api/documents/certificate/${user?.id || 1}`, '_blank');
   };
 
   return (

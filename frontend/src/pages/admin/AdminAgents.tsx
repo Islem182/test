@@ -15,7 +15,7 @@ const AdminAgents: React.FC = () => {
     const fetch = async () => {
       try {
         const users = await userService.getAllUsers();
-        const agentList = (users || []).filter((u) => u.roles?.some((r) => r.includes('AGENT')));
+        const agentList = (users || []).filter((u) => u.isAdmin);
         setAgents(agentList);
       } catch { setAgents([]); }
       finally { setLoading(false); }

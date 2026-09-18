@@ -13,36 +13,24 @@ import {
 } from '@mui/material';
 import { Notifications as NotificationsIcon, CheckCircle as ReadIcon } from '@mui/icons-material';
 import { apiClient } from '../api/axios';
-import { NotificationItem, ApiResponse } from '../types';
+import type { NotificationItem, ApiResponse } from '../types';
 
 export const NotificationMenu: React.FC = () => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [fetchError, setFetchError] = useState(false);
 
   const fetchNotifications = async () => {
     try {
+      setFetchError(false);
       const res = await apiClient.get<ApiResponse<NotificationItem[]>>('/api/notifications');
       if (res.data?.data) {
         setNotifications(res.data.data);
       }
     } catch {
-      setNotifications([
-        {
-          id: 1,
-          title: 'Application Received',
-          message: 'Your tax registration application #1042 was successfully received by DGI.',
-          readStatus: false,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          title: 'Document Verified',
-          message: 'Your CIN copy document was verified by OCR scanner.',
-          readStatus: true,
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-      ]);
+      setFetchError(true);
+      setNotifications([]);
     }
   };
 
@@ -106,7 +94,7 @@ export const NotificationMenu: React.FC = () => {
           {notifications.length === 0 ? (
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
-                No notifications found.
+                {fetchError ? 'Could not load notifications.' : 'No notifications yet.'}
               </Typography>
             </Box>
           ) : (

@@ -3,14 +3,11 @@ package com.dgi.platform.service.impl;
 import com.dgi.platform.dto.ChangePasswordRequest;
 import com.dgi.platform.dto.UpdateProfileRequest;
 import com.dgi.platform.dto.UserProfileDto;
-import com.dgi.platform.entity.FiscalNumber;
-import com.dgi.platform.entity.Taxpayer;
 import com.dgi.platform.entity.User;
 import com.dgi.platform.exception.BadRequestException;
 import com.dgi.platform.exception.ResourceNotFoundException;
 import com.dgi.platform.mapper.UserMapper;
 import com.dgi.platform.repository.FiscalNumberRepository;
-import com.dgi.platform.repository.TaxpayerRepository;
 import com.dgi.platform.repository.UserRepository;
 import com.dgi.platform.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final TaxpayerRepository taxpayerRepository;
     private final FiscalNumberRepository fiscalNumberRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
@@ -33,62 +29,40 @@ public class UserServiceImpl implements UserService {
     public UserProfileDto getProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
-
-        Taxpayer taxpayer = taxpayerRepository.findByUser(user).orElse(null);
-        String fiscalNumStr = null;
-        if (taxpayer != null) {
-            fiscalNumStr = fiscalNumberRepository.findByTaxpayerId(taxpayer.getId())
-                    .map(FiscalNumber::getFiscalNumber)
-                    .orElse(null);
-        }
-
-        return userMapper.toUserProfileDto(user, taxpayer, fiscalNumStr);
+        String fiscalNumber = fiscalNumberRepository.findByUserId(user.getId())
+                .map(fn -> fn.getFiscalNumber()).orElse(null);
+        return userMapper.toUserProfileDto(user, fiscalNumber);
     }
 
     @Override
     @Transactional
-    public UserProfileDto updateProfile(String username, UpdateProfileRequest updateProfileRequest) {
+    public UserProfileDto updateProfile(String username, UpdateProfileRequest req) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
 
-        if (updateProfileRequest.getPhone() != null) {
-            user.setPhone(updateProfileRequest.getPhone());
-        }
-        userRepository.save(user);
+        if (req.getPhone()          != null) user.setPhone(req.getPhone());
+        if (req.getFirstName()      != null) user.setFirstName(req.getFirstName());
+        if (req.getLastName()       != null) user.setLastName(req.getLastName());
+        if (req.getCin()            != null) user.setCin(req.getCin().isBlank() ? null : req.getCin().trim());
+        if (req.getPassport()       != null) user.setPassport(req.getPassport().isBlank() ? null : req.getPassport().trim());
+        if (req.getBirthDate()      != null) user.setBirthDate(req.getBirthDate());
+        if (req.getAddress()        != null) user.setAddress(req.getAddress());
+        if (req.getProfilePicture() != null) user.setProfilePicture(req.getProfilePicture());
 
-        Taxpayer taxpayer = taxpayerRepository.findByUser(user).orElse(null);
-        if (taxpayer != null) {
-            if (updateProfileRequest.getFirstName() != null) taxpayer.setFirstName(updateProfileRequest.getFirstName());
-            if (updateProfileRequest.getLastName() != null) taxpayer.setLastName(updateProfileRequest.getLastName());
-            if (updateProfileRequest.getCin() != null) taxpayer.setCin(updateProfileRequest.getCin());
-            if (updateProfileRequest.getPassport() != null) taxpayer.setPassport(updateProfileRequest.getPassport());
-            if (updateProfileRequest.getBirthDate() != null) taxpayer.setBirthDate(updateProfileRequest.getBirthDate());
-            if (updateProfileRequest.getAddress() != null) taxpayer.setAddress(updateProfileRequest.getAddress());
-            if (updateProfileRequest.getProfilePicture() != null) taxpayer.setProfilePicture(updateProfileRequest.getProfilePicture());
-            taxpayerRepository.save(taxpayer);
-        }
-
-        String fiscalNumStr = null;
-        if (taxpayer != null) {
-            fiscalNumStr = fiscalNumberRepository.findByTaxpayerId(taxpayer.getId())
-                    .map(FiscalNumber::getFiscalNumber)
-                    .orElse(null);
-        }
-
-        return userMapper.toUserProfileDto(user, taxpayer, fiscalNumStr);
+        User saved = userRepository.save(user);
+        String fiscalNumber = fiscalNumberRepository.findByUserId(saved.getId())
+                .map(fn -> fn.getFiscalNumber()).orElse(null);
+        return userMapper.toUserProfileDto(saved, fiscalNumber);
     }
 
     @Override
     @Transactional
-    public void changePassword(String username, ChangePasswordRequest changePasswordRequest) {
+    public void changePassword(String username, ChangePasswordRequest req) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
-
-        if (!passwordEncoder.matches(changePasswordRequest.getCurrentPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPassword()))
             throw new BadRequestException("Current password does not match");
-        }
-
-        user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+        user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         userRepository.save(user);
     }
 }

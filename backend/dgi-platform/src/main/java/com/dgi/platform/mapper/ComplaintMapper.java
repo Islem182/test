@@ -7,21 +7,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class ComplaintMapper {
 
-    public ComplaintResponse toResponse(Complaint complaint) {
-        if (complaint == null) return null;
-
-        String taxpayerName = complaint.getTaxpayer() != null ?
-                complaint.getTaxpayer().getFirstName() + " " + complaint.getTaxpayer().getLastName() : null;
-
+    public ComplaintResponse toResponse(Complaint c) {
+        if (c == null) return null;
+        String name = null;
+        if (c.getUser() != null) {
+            String f = c.getUser().getFirstName();
+            String l = c.getUser().getLastName();
+            if (f != null || l != null)
+                name = ((f != null ? f : "") + " " + (l != null ? l : "")).trim();
+        }
         return ComplaintResponse.builder()
-                .id(complaint.getId())
-                .taxpayerId(complaint.getTaxpayer() != null ? complaint.getTaxpayer().getId() : null)
-                .taxpayerName(taxpayerName)
-                .subject(complaint.getSubject())
-                .message(complaint.getMessage())
-                .status(complaint.getStatus())
-                .response(complaint.getResponse())
-                .createdAt(complaint.getCreatedAt())
+                .id(c.getId())
+                .userId(c.getUser() != null ? c.getUser().getId() : null)
+                .userName(name)
+                .subject(c.getSubject()).message(c.getMessage())
+                .status(c.getStatus()).response(c.getResponse())
+                .createdAt(c.getCreatedAt())
                 .build();
     }
 }

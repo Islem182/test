@@ -9,32 +9,31 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
+  isAdmin: boolean;
   login: (usernameOrEmail: string, password: string) => Promise<JwtResponse>;
   register: (data: Record<string, any>) => Promise<JwtResponse>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  hasRole: (role: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(() => {
+  const [user, setUser]   = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem('user');
     return saved ? JSON.parse(saved) : null;
   });
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('accessToken'));
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
+    const init = async () => {
       if (token) {
         try {
           const profile = await userService.getProfile();
           setUser(profile);
           localStorage.setItem('user', JSON.stringify(profile));
-        } catch (err) {
-          console.error('Failed to fetch user profile:', err);
+        } catch {
           setUser(null);
           setToken(null);
           localStorage.removeItem('accessToken');
@@ -46,8 +45,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       setLoading(false);
     };
-
-    initAuth();
+    init();
   }, [token]);
 
   const login = async (usernameOrEmail: string, password: string): Promise<JwtResponse> => {
@@ -55,23 +53,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setToken(data.accessToken);
-
     try {
       const profile = await userService.getProfile();
       setUser(profile);
       localStorage.setItem('user', JSON.stringify(profile));
     } catch {
-      const fallbackUser: UserProfile = {
-        id: data.id,
-        username: data.username,
-        email: data.email,
-        enabled: true,
-        roles: data.roles,
+      const fallback: UserProfile = {
+        id: data.id, username: data.username, email: data.email,
+        enabled: true, isAdmin: data.isAdmin,
       };
-      setUser(fallbackUser);
-      localStorage.setItem('user', JSON.stringify(fallbackUser));
+      setUser(fallback);
+      localStorage.setItem('user', JSON.stringify(fallback));
     }
-
     return data;
   };
 
@@ -80,23 +73,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setToken(data.accessToken);
-
     try {
       const profile = await userService.getProfile();
       setUser(profile);
       localStorage.setItem('user', JSON.stringify(profile));
     } catch {
-      const fallbackUser: UserProfile = {
-        id: data.id,
-        username: data.username,
-        email: data.email,
-        enabled: true,
-        roles: data.roles,
+      const fallback: UserProfile = {
+        id: data.id, username: data.username, email: data.email,
+        enabled: true, isAdmin: false,
       };
-      setUser(fallbackUser);
-      localStorage.setItem('user', JSON.stringify(fallbackUser));
+      setUser(fallback);
+      localStorage.setItem('user', JSON.stringify(fallback));
     }
-
     return data;
   };
 
@@ -114,25 +102,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const hasRole = (role: string): boolean => {
-    if (!user || !user.roles) return false;
-    const formattedRole = role.startsWith('ROLE_') ? role : `ROLE_${role}`;
-    return user.roles.some((r) => r === role || r === formattedRole);
-  };
+  const isAdmin = user?.isAdmin === true;
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        token,
-        isAuthenticated: !!token && !!user,
-        loading,
-        login,
-        register,
-        logout,
-        refreshProfile,
-        hasRole,
-      }}
+      value={{ user, token, isAuthenticated: !!token && !!user, loading, isAdmin,
+               login, register, logout, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>
@@ -140,9 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
 };

@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { StatusBadge } from '../components/StatusBadge';
 import { applicationService } from '../services/application.service';
-import { TaxApplication } from '../types';
+import type { TaxApplication } from '../types';
 
 export const Dashboard: React.FC = () => {
   const theme = useTheme();
@@ -137,7 +137,7 @@ export const Dashboard: React.FC = () => {
                 <Button
                   size="small"
                   startIcon={<DownloadIcon />}
-                  onClick={() => window.open(`http://localhost:8082/api/documents/certificate/${user?.taxpayerId || 1}`, '_blank')}
+                  onClick={() => window.open(`http://localhost:8082/api/documents/certificate/${user?.id || 1}`, '_blank')}
                   sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                   Télécharger Attestation

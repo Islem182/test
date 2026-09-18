@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface FiscalNumberRepository extends JpaRepository<FiscalNumber, Long> {
-    Optional<FiscalNumber> findByTaxpayerId(Long taxpayerId);
+    Optional<FiscalNumber> findByUserId(Long userId);
     Optional<FiscalNumber> findByFiscalNumber(String fiscalNumber);
 }

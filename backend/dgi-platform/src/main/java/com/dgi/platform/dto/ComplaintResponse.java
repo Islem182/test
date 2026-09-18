@@ -13,10 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ComplaintResponse {
-
     private Long id;
-    private Long taxpayerId;
-    private String taxpayerName;
+    private Long userId;
+    private String userName;
     private String subject;
     private String message;
     private ComplaintStatus status;

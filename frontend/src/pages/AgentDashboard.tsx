@@ -26,7 +26,7 @@ import {
 import { StatusBadge } from '../components/StatusBadge';
 import { OcrResultsViewer } from '../components/OcrResultsViewer';
 import { apiClient } from '../api/axios';
-import { TaxApplication } from '../types';
+import type { TaxApplication } from '../types';
 
 export const AgentDashboard: React.FC = () => {
   const [applications, setApplications] = useState<TaxApplication[]>([]);

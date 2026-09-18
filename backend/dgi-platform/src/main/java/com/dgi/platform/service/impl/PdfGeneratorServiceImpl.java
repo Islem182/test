@@ -2,11 +2,11 @@ package com.dgi.platform.service.impl;
 
 import com.dgi.platform.entity.FiscalNumber;
 import com.dgi.platform.entity.TaxApplication;
-import com.dgi.platform.entity.Taxpayer;
+import com.dgi.platform.entity.User;
 import com.dgi.platform.exception.ResourceNotFoundException;
 import com.dgi.platform.repository.FiscalNumberRepository;
 import com.dgi.platform.repository.TaxApplicationRepository;
-import com.dgi.platform.repository.TaxpayerRepository;
+import com.dgi.platform.repository.UserRepository;
 import com.dgi.platform.service.PdfGeneratorService;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPCell;
@@ -15,90 +15,71 @@ import com.lowagie.text.pdf.PdfWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.awt.Color;
+import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
 public class PdfGeneratorServiceImpl implements PdfGeneratorService {
 
-    private final TaxpayerRepository taxpayerRepository;
+    private final UserRepository userRepository;
     private final FiscalNumberRepository fiscalNumberRepository;
     private final TaxApplicationRepository taxApplicationRepository;
 
     @Override
-    public byte[] generateRegistrationCertificate(Long taxpayerId) {
-        Taxpayer taxpayer = taxpayerRepository.findById(taxpayerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Taxpayer", "id", taxpayerId));
+    public byte[] generateRegistrationCertificate(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        FiscalNumber fiscalNum = fiscalNumberRepository.findByTaxpayerId(taxpayerId)
-                .orElse(null);
-
-        String fiscalStr = fiscalNum != null ? fiscalNum.getFiscalNumber() : "PENDING-APPROVAL";
+        String fiscalStr = fiscalNumberRepository.findByUserId(userId)
+                .map(FiscalNumber::getFiscalNumber)
+                .orElse("EN ATTENTE D'APPROBATION");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-
+        Document doc = new Document(PageSize.A4, 36, 36, 36, 36);
         try {
-            PdfWriter.getInstance(document, out);
-            document.open();
+            PdfWriter.getInstance(doc, out);
+            doc.open();
 
-            // Header Title
-            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(15, 76, 129));
-            Paragraph header = new Paragraph("RÉPUBLIQUE TUNISIENNE\nMINISTÈRE DES FINANCES\nDIRECTION GÉNÉRALE DES IMPÔTS", headerFont);
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, new Color(15, 76, 129));
+            Paragraph header = new Paragraph(
+                    "RÉPUBLIQUE TUNISIENNE\nMINISTÈRE DES FINANCES\nDIRECTION GÉNÉRALE DES IMPÔTS", headerFont);
             header.setAlignment(Element.ALIGN_CENTER);
-            document.add(header);
+            doc.add(header);
+            doc.add(new Paragraph(" "));
 
-            document.add(new Paragraph(" "));
-
-            // Document Title
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, Color.BLACK);
-            Paragraph title = new Paragraph("ATTESTATION D'IMMATRICULATION FISCALE", titleFont);
+            Paragraph title = new Paragraph("ATTESTATION D'IMMATRICULATION FISCALE",
+                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.BLACK));
             title.setAlignment(Element.ALIGN_CENTER);
-            document.add(title);
+            doc.add(title);
+            doc.add(new Paragraph(" "));
 
-            document.add(new Paragraph(" "));
-
-            // Table with details
             PdfPTable table = new PdfPTable(2);
             table.setWidthPercentage(100);
-            table.setSpacingBefore(10f);
+            Font lbl = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, new Color(15, 76, 129));
+            Font val = FontFactory.getFont(FontFactory.HELVETICA, 11, Color.BLACK);
 
-            Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, new Color(15, 76, 129));
-            Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 11, Color.BLACK);
+            addRow(table, "Matricule fiscal :",      fiscalStr, lbl, val);
+            addRow(table, "Nom & Prénom :",
+                    nvl(user.getFirstName()) + " " + nvl(user.getLastName()), lbl, val);
+            addRow(table, "CIN :",                   nvl(user.getCin()),      lbl, val);
+            addRow(table, "Passeport :",             nvl(user.getPassport()), lbl, val);
+            addRow(table, "Adresse :",               nvl(user.getAddress()),  lbl, val);
+            addRow(table, "Date d'émission :",
+                    java.time.LocalDate.now().format(DateTimeFormatter.ISO_DATE), lbl, val);
+            doc.add(table);
 
-            addCell(table, "Numéro Matricule Fiscal:", labelFont);
-            addCell(table, fiscalStr, valueFont);
-
-            addCell(table, "Nom & Prénom:", labelFont);
-            addCell(table, taxpayer.getFirstName() + " " + taxpayer.getLastName(), valueFont);
-
-            addCell(table, "Carte d'Identité (CIN):", labelFont);
-            addCell(table, taxpayer.getCin() != null ? taxpayer.getCin() : "N/A", valueFont);
-
-            addCell(table, "Passport:", labelFont);
-            addCell(table, taxpayer.getPassport() != null ? taxpayer.getPassport() : "N/A", valueFont);
-
-            addCell(table, "Adresse Domiciliation:", labelFont);
-            addCell(table, taxpayer.getAddress() != null ? taxpayer.getAddress() : "N/A", valueFont);
-
-            addCell(table, "Date d'Émission:", labelFont);
-            addCell(table, java.time.LocalDate.now().format(DateTimeFormatter.ISO_DATE), valueFont);
-
-            document.add(table);
-
-            document.add(new Paragraph(" "));
-            Font footerFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Font.ITALIC, Color.GRAY);
-            Paragraph footer = new Paragraph("Ce document officiel est délivré électroniquement et fait foi de matricule fiscal auprès des autorités financières.", footerFont);
-            footer.setAlignment(Element.ALIGN_CENTER);
-            document.add(footer);
-
-            document.close();
+            doc.add(new Paragraph(" "));
+            Font footer = FontFactory.getFont(FontFactory.HELVETICA, 9, Font.ITALIC, Color.GRAY);
+            Paragraph fp = new Paragraph(
+                    "Ce document est délivré électroniquement par la DGI.", footer);
+            fp.setAlignment(Element.ALIGN_CENTER);
+            doc.add(fp);
+            doc.close();
         } catch (Exception e) {
-            throw new RuntimeException("Error generating PDF certificate", e);
+            throw new RuntimeException("Erreur lors de la génération du certificat PDF", e);
         }
-
         return out.toByteArray();
     }
 
@@ -106,14 +87,16 @@ public class PdfGeneratorServiceImpl implements PdfGeneratorService {
     public byte[] generateApplicationPdf(Long applicationId) {
         TaxApplication app = taxApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("TaxApplication", "id", applicationId));
-
-        return generateRegistrationCertificate(app.getTaxpayer().getId());
+        return generateRegistrationCertificate(app.getUser().getId());
     }
 
-    private void addCell(PdfPTable table, String text, Font font) {
-        PdfPCell cell = new PdfPCell(new Phrase(text, font));
-        cell.setPadding(8);
-        cell.setBorderColor(new Color(220, 220, 220));
-        table.addCell(cell);
+    private void addRow(PdfPTable t, String label, String value, Font lbl, Font val) {
+        PdfPCell lc = new PdfPCell(new Phrase(label, lbl));
+        lc.setPadding(8); lc.setBorderColor(new Color(220, 220, 220));
+        PdfPCell vc = new PdfPCell(new Phrase(value, val));
+        vc.setPadding(8); vc.setBorderColor(new Color(220, 220, 220));
+        t.addCell(lc); t.addCell(vc);
     }
+
+    private String nvl(String s) { return s != null ? s : "N/A"; }
 }

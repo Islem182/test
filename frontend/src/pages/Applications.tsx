@@ -23,7 +23,7 @@ import {
 import { Search as SearchIcon, Visibility as ViewIcon } from '@mui/icons-material';
 import { StatusBadge } from '../components/StatusBadge';
 import { applicationService } from '../services/application.service';
-import { TaxApplication } from '../types';
+import type { TaxApplication } from '../types';
 
 export const Applications: React.FC = () => {
   const [applications, setApplications] = useState<TaxApplication[]>([]);

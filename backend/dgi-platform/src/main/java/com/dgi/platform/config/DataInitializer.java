@@ -1,40 +1,36 @@
 package com.dgi.platform.config;
 
-import com.dgi.platform.entity.Role;
-import com.dgi.platform.entity.RoleName;
 import com.dgi.platform.entity.User;
-import com.dgi.platform.repository.RoleRepository;
 import com.dgi.platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.io.File;
 
 /**
- * Runs once at startup to:
- * 1. Ensure all three roles exist in the roles table.
- * 2. Create the admin account from environment variables if it does not already exist.
+ * Runs on every startup.
  *
- * Required environment variables (set in your OS / Docker / deployment environment):
- *   ADMIN_USERNAME  – the admin login name   (default: "admin" for local dev only)
- *   ADMIN_PASSWORD  – the admin password      (no default — must be set explicitly)
- *   ADMIN_EMAIL     – the admin e-mail        (default: "admin@dgi.gov.tn")
+ * 1. cleanupEmptyUniqueFields()   — fixes old "" values → NULL in users.cin / users.passport
+ * 2. seedAdminUser()              — creates the ONE admin from env vars if missing
+ * 3. checkTessdataConfiguration() — warns if OCR language files are absent
+ *
+ * No role seeding — the role system has been removed.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {
 
-    private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
     @Value("${admin.username:admin}")
     private String adminUsername;
@@ -45,53 +41,67 @@ public class DataInitializer implements ApplicationRunner {
     @Value("${admin.email:admin@dgi.gov.tn}")
     private String adminEmail;
 
+    @Value("${ocr.tessdata-path:}")
+    private String tessdataPath;
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        seedRoles();
+        cleanupEmptyUniqueFields();
         seedAdminUser();
+        checkTessdataConfiguration();
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
+    // ─────────────────────────────────────────────────────────────────────────
 
-    private void seedRoles() {
-        for (RoleName roleName : RoleName.values()) {
-            if (roleRepository.findByName(roleName).isEmpty()) {
-                roleRepository.save(Role.builder().name(roleName).build());
-                log.info("DataInitializer: created role {}", roleName);
-            }
+    /** Convert "" → NULL for unique-constrained columns that were saved blank. */
+    private void cleanupEmptyUniqueFields() {
+        try {
+            int cinFixed      = jdbcTemplate.update("UPDATE users SET cin      = NULL WHERE cin      = ''");
+            int passportFixed = jdbcTemplate.update("UPDATE users SET passport = NULL WHERE passport = ''");
+            if (cinFixed > 0 || passportFixed > 0)
+                log.info("DataInitializer: fixed {} empty cin, {} empty passport → NULL",
+                        cinFixed, passportFixed);
+        } catch (Exception e) {
+            log.warn("DataInitializer: cleanup skipped — {}", e.getMessage());
         }
     }
 
     private void seedAdminUser() {
         if (adminPassword == null || adminPassword.isBlank()) {
-            log.warn("DataInitializer: ADMIN_PASSWORD environment variable is not set — skipping admin account creation.");
+            log.warn("DataInitializer: ADMIN_PASSWORD not set — skipping admin creation.");
             return;
         }
-
         if (userRepository.existsByUsername(adminUsername)) {
-            log.info("DataInitializer: admin account '{}' already exists — skipping.", adminUsername);
+            log.info("DataInitializer: admin '{}' already exists.", adminUsername);
             return;
         }
-
-        Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
-                .orElseThrow(() -> new IllegalStateException("ROLE_ADMIN not found after role seeding"));
-
-        Set<Role> roles = new HashSet<>();
-        roles.add(adminRole);
 
         User admin = User.builder()
                 .username(adminUsername)
                 .email(adminEmail)
                 .password(passwordEncoder.encode(adminPassword))
+                .isAdmin(true)
                 .enabled(true)
-                .roles(roles)
                 .build();
 
         userRepository.save(admin);
-        // Password is intentionally NOT logged
-        log.info("DataInitializer: admin account '{}' created successfully.", adminUsername);
+        log.info("DataInitializer: admin '{}' created.", adminUsername);
+    }
+
+    private void checkTessdataConfiguration() {
+        String path = (tessdataPath != null && !tessdataPath.isBlank())
+                ? tessdataPath : System.getenv("TESSDATA_PREFIX");
+        if (path == null || path.isBlank()) {
+            log.warn("OCR: TESSDATA_PATH not set — Tesseract will use its own default.");
+            return;
+        }
+        boolean fra = new File(path, "fra.traineddata").exists();
+        boolean ara = new File(path, "ara.traineddata").exists();
+        boolean eng = new File(path, "eng.traineddata").exists();
+        if (!fra || !ara || !eng)
+            log.warn("OCR: missing tessdata in '{}' — fra={} ara={} eng={}", path, fra, ara, eng);
+        else
+            log.info("DataInitializer: Tesseract tessdata OK in '{}'.", path);
     }
 }

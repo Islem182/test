@@ -39,18 +39,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ drawerWidth = 260, openChatbot
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, hasRole } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
-  const isTaxpayer = hasRole('TAXPAYER');
-  const isAgent = hasRole('AGENT');
-  const isAdmin = hasRole('ADMIN');
+  const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
-
-  const isActive = (path: string) => location.pathname === path;
 
   const renderNavGroup = (title: string, items: { label: string; icon: React.ReactNode; path?: string; onClick?: () => void; badge?: string }[]) => (
     <Box sx={{ mb: 2 }}>
@@ -175,33 +171,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ drawerWidth = 260, openChatbot
       {/* Navigation Links */}
       <Box sx={{ overflowY: 'auto', flex: 1, py: 2 }}>
         {/* Taxpayer Menu */}
-        {(isTaxpayer || (!isAgent && !isAdmin)) &&
-          renderNavGroup('Taxpayer Services', [
-            { label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-            { label: 'Profile', icon: <PersonIcon />, path: '/profile' },
-            { label: 'New Registration', icon: <RegistrationIcon />, path: '/registration/new' },
-            { label: 'My Applications', icon: <ApplicationsIcon />, path: '/applications' },
-            { label: 'Tax Documents', icon: <DocumentsIcon />, path: '/documents' },
-            { label: 'Complaints', icon: <ComplaintsIcon />, path: '/complaints' },
+        {!isAdmin &&
+          renderNavGroup('Services Contribuable', [
+            { label: 'Tableau de bord', icon: <DashboardIcon />, path: '/dashboard' },
+            { label: 'Profil', icon: <PersonIcon />, path: '/profile' },
+            { label: 'Nouvelle immatriculation', icon: <RegistrationIcon />, path: '/registration/new' },
+            { label: 'Mes dossiers', icon: <ApplicationsIcon />, path: '/applications' },
+            { label: 'Documents fiscaux', icon: <DocumentsIcon />, path: '/documents' },
+            { label: 'Réclamations', icon: <ComplaintsIcon />, path: '/complaints' },
             { label: 'Notifications', icon: <NotificationsIcon />, path: '/notifications' },
-            { label: 'Assistant AI', icon: <ChatbotIcon />, onClick: openChatbot, badge: 'AI' },
-          ])}
-
-        {/* Agent Menu */}
-        {isAgent &&
-          renderNavGroup('Agent Portal', [
-            { label: 'Agent Dashboard', icon: <AgentIcon />, path: '/agent/dashboard' },
-            { label: 'Applications Queue', icon: <ApplicationsIcon />, path: '/agent/applications' },
-            { label: 'Taxpayer Complaints', icon: <ComplaintsIcon />, path: '/complaints' },
+            { label: 'Assistant IA', icon: <ChatbotIcon />, onClick: openChatbot, badge: 'IA' },
           ])}
 
         {/* Admin Menu */}
         {isAdmin &&
           renderNavGroup('Administration', [
-            { label: 'Admin Dashboard', icon: <AdminIcon />, path: '/admin/dashboard' },
-            { label: 'User Management', icon: <UsersIcon />, path: '/admin/users' },
-            { label: 'Agents Roster', icon: <AgentIcon />, path: '/admin/agents' },
-            { label: 'System Statistics', icon: <StatsIcon />, path: '/admin/statistics' },
+            { label: 'Tableau Admin', icon: <AdminIcon />, path: '/admin/dashboard' },
+            { label: 'Dossiers', icon: <ApplicationsIcon />, path: '/agent/applications' },
+            { label: 'Utilisateurs', icon: <UsersIcon />, path: '/admin/users' },
+            { label: 'Statistiques', icon: <StatsIcon />, path: '/admin/statistics' },
           ])}
       </Box>
 

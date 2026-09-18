@@ -141,4 +141,24 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
+
+    @ExceptionHandler(Error.class)
+    public ResponseEntity<ApiResponse<ErrorDetails>> handleJvmError(
+            Error err, WebRequest request) {
+
+        ErrorDetails errorDetails = ErrorDetails.builder()
+                .timestamp(LocalDateTime.now())
+                .message("A critical server error occurred: " + err.getMessage())
+                .details(request.getDescription(false))
+                .build();
+
+        return new ResponseEntity<>(
+                ApiResponse.<ErrorDetails>builder()
+                        .success(false)
+                        .message("Server error — please contact the administrator")
+                        .data(errorDetails)
+                        .build(),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
 }

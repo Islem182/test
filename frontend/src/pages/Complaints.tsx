@@ -15,7 +15,7 @@ import {
 import { ExpandMore as ExpandIcon, Send as SendIcon } from '@mui/icons-material';
 import { StatusBadge } from '../components/StatusBadge';
 import { complaintService } from '../services/complaint.service';
-import { Complaint } from '../types';
+import type { Complaint } from '../types';
 
 export const Complaints: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);

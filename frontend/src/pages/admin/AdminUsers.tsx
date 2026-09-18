@@ -78,12 +78,11 @@ const AdminUsers: React.FC = () => {
                     </TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        {u.roles?.map((role, i) => (
-                          <Chip key={i} label={role} size="small"
-                            color={role.includes('ADMIN') ? 'error' : role.includes('AGENT') ? 'info' : 'default'} />
-                        ))}
-                      </Box>
+                      <Chip
+                        label={u.isAdmin ? 'Admin' : 'Contribuable'}
+                        size="small"
+                        color={u.isAdmin ? 'error' : 'default'}
+                      />
                     </TableCell>
                     <TableCell>
                       <Chip label={u.enabled ? 'Active' : 'Disabled'} size="small"

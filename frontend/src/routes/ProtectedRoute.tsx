@@ -4,11 +4,12 @@ import { CircularProgress, Box } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
-  requiredRole?: string;
+  /** If "ADMIN", only the admin account can access. Omit for any authenticated user. */
+  requiredRole?: 'ADMIN' | 'TAXPAYER';
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {
-  const { isAuthenticated, loading, hasRole } = useAuth();
+  const { isAuthenticated, loading, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -18,13 +19,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) 
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  if (requiredRole && !hasRole(requiredRole)) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (requiredRole === 'ADMIN' && !isAdmin) return <Navigate to="/dashboard" replace />;
+  if (requiredRole === 'TAXPAYER' && isAdmin) return <Navigate to="/admin/dashboard" replace />;
 
   return <Outlet />;
 };

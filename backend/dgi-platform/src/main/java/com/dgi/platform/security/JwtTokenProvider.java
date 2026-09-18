@@ -8,13 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenProvider {
@@ -41,65 +39,54 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        return generateTokenFromUsername(userPrincipal.getUsername(), userPrincipal.getId(),
-                userPrincipal.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.joining(",")));
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        return buildToken(principal.getUsername(), principal.getId(), principal.isAdmin());
     }
 
-    public String generateTokenFromUsername(String username, Long userId, String roles) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+    public String generateTokenFromUsername(String username, Long userId, boolean isAdmin) {
+        return buildToken(username, userId, isAdmin);
+    }
 
+    private String buildToken(String username, Long userId, boolean isAdmin) {
+        Date now = new Date();
         return Jwts.builder()
                 .subject(username)
                 .claim("userId", userId)
-                .claim("roles", roles)
+                .claim("isAdmin", isAdmin)
                 .issuedAt(now)
-                .expiration(expiryDate)
+                .expiration(new Date(now.getTime() + jwtExpirationInMs))
                 .signWith(getSigningKey())
                 .compact();
     }
 
     public String generateRefreshToken(String username) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationInMs);
-
         return Jwts.builder()
                 .subject(username)
                 .claim("type", "refresh")
                 .issuedAt(now)
-                .expiration(expiryDate)
+                .expiration(new Date(now.getTime() + jwtRefreshExpirationInMs))
                 .signWith(getSigningKey())
                 .compact();
     }
 
     public String getUsernameFromJWT(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
+        return Jwts.parser()
+                .verifyWith(getSigningKey()).build()
                 .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.getSubject();
+                .getPayload()
+                .getSubject();
     }
 
     public boolean validateToken(String authToken) {
         try {
             Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(authToken);
             return true;
-        } catch (SecurityException ex) {
-            logger.error("Invalid JWT signature");
-        } catch (MalformedJwtException ex) {
-            logger.error("Invalid JWT token");
-        } catch (ExpiredJwtException ex) {
-            logger.error("Expired JWT token");
-        } catch (UnsupportedJwtException ex) {
-            logger.error("Unsupported JWT token");
-        } catch (IllegalArgumentException ex) {
-            logger.error("JWT claims string is empty");
-        }
+        } catch (SecurityException ex)      { logger.error("Invalid JWT signature"); }
+        catch (MalformedJwtException ex)    { logger.error("Invalid JWT token"); }
+        catch (ExpiredJwtException ex)      { logger.error("Expired JWT token"); }
+        catch (UnsupportedJwtException ex)  { logger.error("Unsupported JWT token"); }
+        catch (IllegalArgumentException ex) { logger.error("JWT claims string is empty"); }
         return false;
     }
 }

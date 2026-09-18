@@ -14,9 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class TaxApplicationResponse {
-
     private Long id;
-    private Long taxpayerId;
+    private Long userId;
     private String taxpayerName;
     private ApplicationStatus status;
     private LocalDateTime createdDate;

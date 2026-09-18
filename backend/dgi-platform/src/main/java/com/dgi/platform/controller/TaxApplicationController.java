@@ -27,7 +27,7 @@ public class TaxApplicationController {
     private final TaxApplicationService taxApplicationService;
 
     @PostMapping
-    @PreAuthorize("hasRole('TAXPAYER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Submit new tax application")
     public ResponseEntity<ApiResponse<TaxApplicationResponse>> createApplication(
             @AuthenticationPrincipal UserDetails userDetails,

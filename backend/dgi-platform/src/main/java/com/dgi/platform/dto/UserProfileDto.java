@@ -7,24 +7,21 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class UserProfileDto {
-
     private Long id;
     private String username;
     private String email;
     private String phone;
     private boolean enabled;
+    private boolean isAdmin;
     private LocalDateTime createdAt;
-    private List<String> roles;
 
-    // Taxpayer profile fields (if user is TAXPAYER)
-    private Long taxpayerId;
+    // Identity / taxpayer fields
     private String firstName;
     private String lastName;
     private String cin;

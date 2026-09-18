@@ -15,7 +15,7 @@ import { useAuth } from '../context/AuthContext';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, hasRole } = useAuth();
+  const { login, isAdmin } = useAuth();
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,9 +29,7 @@ export const Login: React.FC = () => {
 
     try {
       await login(usernameOrEmail, password);
-      if (hasRole('AGENT')) {
-        navigate('/agent/dashboard');
-      } else if (hasRole('ADMIN')) {
+      if (isAdmin) {
         navigate('/admin/dashboard');
       } else {
         navigate('/dashboard');

@@ -8,11 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "fiscal_numbers")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class FiscalNumber {
 
     @Id
@@ -20,8 +16,8 @@ public class FiscalNumber {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "taxpayer_id", nullable = false, unique = true)
-    private Taxpayer taxpayer;
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private User user;
 
     @Column(name = "fiscal_number", nullable = false, unique = true, length = 50)
     private String fiscalNumber;

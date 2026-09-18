@@ -17,7 +17,7 @@ import java.time.LocalDate;
 public class RegisterRequest {
 
     @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Size(min = 3, max = 50)
     private String username;
 
     @NotBlank(message = "Email is required")
@@ -25,10 +25,8 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 100, message = "Password must be at least 6 characters")
+    @Size(min = 6, max = 100)
     private String password;
-
-    private String phone;
 
     @NotBlank(message = "First name is required")
     private String firstName;
@@ -40,4 +38,6 @@ public class RegisterRequest {
     private String passport;
     private LocalDate birthDate;
     private String address;
+    private String phone;
+    // role is intentionally absent — always TAXPAYER (is_admin=false)
 }
