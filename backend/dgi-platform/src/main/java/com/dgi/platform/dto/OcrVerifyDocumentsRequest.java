@@ -37,8 +37,83 @@ public class OcrVerifyDocumentsRequest {
 
     /**
      * extractedData from the Certificat d'immatriculation OCR response.
-     * Expected keys: companyName, businessType, registrationDate, address, fiscalNumber, etc.
+     * Expected keys: companyName, businessType, registrationDate, address, sector
      */
     @NotNull(message = "certificatData must not be null")
     private Map<String, String> certificatData;
+
+    /**
+     * Data entered by the user during Step 1 (Personal Info) and Step 2 (Commercial Activity).
+     * Expected keys:
+     * Step 1: firstName, lastName, cin, passport, phone, address
+     * Step 2: businessName, businessType, sector, startDate, businessAddress
+     */
+    private Map<String, String> userEnteredData;
+
+    public Map<String, String> getCinData() {
+        return cinData;
+    }
+
+    public void setCinData(Map<String, String> cinData) {
+        this.cinData = cinData;
+    }
+
+    public Map<String, String> getPassportData() {
+        return passportData;
+    }
+
+    public void setPassportData(Map<String, String> passportData) {
+        this.passportData = passportData;
+    }
+
+    public Map<String, String> getCertificatData() {
+        return certificatData;
+    }
+
+    public void setCertificatData(Map<String, String> certificatData) {
+        this.certificatData = certificatData;
+    }
+
+    public Map<String, String> getUserEnteredData() {
+        return userEnteredData;
+    }
+
+    public void setUserEnteredData(Map<String, String> userEnteredData) {
+        this.userEnteredData = userEnteredData;
+    }
+
+    public static OcrVerifyDocumentsRequestBuilder builder() {
+        return new OcrVerifyDocumentsRequestBuilder();
+    }
+
+    public static class OcrVerifyDocumentsRequestBuilder {
+        private Map<String, String> cinData;
+        private Map<String, String> passportData;
+        private Map<String, String> certificatData;
+        private Map<String, String> userEnteredData;
+
+        public OcrVerifyDocumentsRequestBuilder cinData(Map<String, String> cinData) {
+            this.cinData = cinData;
+            return this;
+        }
+
+        public OcrVerifyDocumentsRequestBuilder passportData(Map<String, String> passportData) {
+            this.passportData = passportData;
+            return this;
+        }
+
+        public OcrVerifyDocumentsRequestBuilder certificatData(Map<String, String> certificatData) {
+            this.certificatData = certificatData;
+            return this;
+        }
+
+        public OcrVerifyDocumentsRequestBuilder userEnteredData(Map<String, String> userEnteredData) {
+            this.userEnteredData = userEnteredData;
+            return this;
+        }
+
+        public OcrVerifyDocumentsRequest build() {
+            return new OcrVerifyDocumentsRequest(cinData, passportData, certificatData, userEnteredData);
+        }
+    }
 }

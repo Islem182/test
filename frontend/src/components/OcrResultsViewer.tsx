@@ -26,6 +26,7 @@ import {
   Business as CertificatIcon,
 } from '@mui/icons-material';
 import type { OcrVerificationResponse } from '../types';
+import { compareNumber, compareText, compareDate } from '../utils/ocrCompare';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -55,10 +56,13 @@ interface OcrResultsViewerProps {
   docTitle?: string;
 }
 
+type CompareType = 'number' | 'text' | 'address' | 'date';
+
 interface FieldRow {
   label: string;
   extractedKey: string;
   userValue?: string;
+  compareType?: CompareType; // defaults to 'text'
 }
 
 // ── Document type helpers ──────────────────────────────────────────────────
@@ -80,9 +84,9 @@ function getDocumentMeta(docType: string): {
       color: '#1565c0',
       defaultTitle: 'Passeport',
       fieldRows: (ud) => [
-        { label: 'N° Passeport', extractedKey: 'passportNumber', userValue: ud.passport },
-        { label: 'Nom',          extractedKey: 'lastName',       userValue: ud.lastName },
-        { label: 'Prénom',       extractedKey: 'firstName',      userValue: ud.firstName },
+        { label: 'N° Passeport', extractedKey: 'passportNumber', userValue: ud.passport,   compareType: 'number' },
+        { label: 'Nom',          extractedKey: 'lastName',       userValue: ud.lastName,   compareType: 'text' },
+        { label: 'Prénom',       extractedKey: 'firstName',      userValue: ud.firstName,  compareType: 'text' },
       ],
     };
   }
@@ -96,11 +100,11 @@ function getDocumentMeta(docType: string): {
       color: '#2e7d32',
       defaultTitle: 'Certificat d\'immatriculation',
       fieldRows: (ud) => [
-        { label: 'Dénomination sociale',     extractedKey: 'companyName',      userValue: ud.companyName },
-        { label: 'Forme juridique',           extractedKey: 'businessType',     userValue: ud.businessType },
-        { label: 'Siège social',              extractedKey: 'address',          userValue: ud.businessAddress },
-        { label: 'Secteur d\'activité',       extractedKey: 'sector',           userValue: ud.sector },
-        { label: 'Date de début d\'activité', extractedKey: 'registrationDate', userValue: ud.startDate },
+        { label: 'Dénomination sociale',     extractedKey: 'companyName',      userValue: ud.companyName,     compareType: 'text' },
+        { label: 'Forme juridique',           extractedKey: 'businessType',     userValue: ud.businessType,    compareType: 'text' },
+        { label: 'Siège social',              extractedKey: 'address',          userValue: ud.businessAddress, compareType: 'address' },
+        { label: 'Secteur d\'activité',       extractedKey: 'sector',           userValue: ud.sector,          compareType: 'text' },
+        { label: 'Date de début d\'activité', extractedKey: 'registrationDate', userValue: ud.startDate,       compareType: 'date' },
       ],
     };
   }
@@ -112,10 +116,10 @@ function getDocumentMeta(docType: string): {
     color: '#b71c1c',
     defaultTitle: 'Carte d\'Identité Nationale',
     fieldRows: (ud) => [
-      { label: 'N° CIN', extractedKey: 'cinNumber', userValue: ud.cin },
-      { label: 'Nom',    extractedKey: 'lastName',  userValue: ud.lastName },
-      { label: 'Prénom', extractedKey: 'firstName', userValue: ud.firstName },
-      { label: 'Adresse',extractedKey: 'address',   userValue: ud.address },
+      { label: 'N° CIN', extractedKey: 'cinNumber', userValue: ud.cin,       compareType: 'number' },
+      { label: 'Nom',    extractedKey: 'lastName',  userValue: ud.lastName,  compareType: 'text' },
+      { label: 'Prénom', extractedKey: 'firstName', userValue: ud.firstName, compareType: 'text' },
+      { label: 'Adresse',extractedKey: 'address',   userValue: ud.address,   compareType: 'address' },
     ],
   };
 }
@@ -221,9 +225,9 @@ export const OcrResultsViewer: React.FC<OcrResultsViewerProps> = ({
             <TableHead>
               <TableRow sx={{ bgcolor: 'action.hover' }}>
                 <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Champ</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Valeur saisie</TableCell>
                 <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Valeur OCR</TableCell>
-                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Votre saisie</TableCell>
-                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', textAlign: 'center' }}>✓</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', textAlign: 'center' }}>Statut</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -231,32 +235,46 @@ export const OcrResultsViewer: React.FC<OcrResultsViewerProps> = ({
                 const ocrVal  = extracted[row.extractedKey];
                 const userVal = row.userValue;
 
-                let matchIcon: React.ReactNode;
-                if (!ocrVal) {
-                  matchIcon = <UnknownIcon color="disabled" fontSize="small" />;
-                } else if (!userVal) {
-                  matchIcon = <UnknownIcon color="disabled" fontSize="small" />;
-                } else if (ocrVal.toLowerCase() === userVal.toLowerCase()) {
-                  matchIcon = <MatchIcon color="success" fontSize="small" />;
-                } else {
-                  matchIcon = <MismatchIcon color="error" fontSize="small" />;
-                }
-
                 // Skip rows where OCR extracted nothing AND there's no user value
                 if (!ocrVal && !userVal) return null;
+
+                const compare = row.compareType === 'number' ? compareNumber
+                              : row.compareType === 'date'   ? compareDate
+                              : row.compareType === 'address' ? (u?: string, o?: string) => compareText(u, o, 70)
+                              : compareText;
+                const { status } = compare(userVal, ocrVal);
+
+                const icon = status === 'MATCH'
+                  ? <MatchIcon color="success" fontSize="small" />
+                  : status === 'MISMATCH'
+                  ? <MismatchIcon color="error" fontSize="small" />
+                  : <UnknownIcon color="disabled" fontSize="small" />;
 
                 return (
                   <TableRow key={row.extractedKey}>
                     <TableCell sx={{ fontWeight: 600, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                       {row.label}
                     </TableCell>
-                    <TableCell sx={{ color: ocrVal ? 'text.primary' : 'text.disabled', fontSize: '0.78rem' }}>
-                      {ocrVal || '—'}
-                    </TableCell>
                     <TableCell sx={{ color: userVal ? 'text.primary' : 'text.disabled', fontSize: '0.78rem' }}>
                       {userVal || '—'}
                     </TableCell>
-                    <TableCell sx={{ textAlign: 'center' }}>{matchIcon}</TableCell>
+                    <TableCell sx={{ color: ocrVal ? 'text.primary' : 'text.disabled', fontSize: '0.78rem' }}>
+                      {ocrVal || '—'}
+                    </TableCell>
+                    <TableCell sx={{ textAlign: 'center' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                        {icon}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontWeight: 700,
+                            color: status === 'MATCH' ? 'success.main' : status === 'MISMATCH' ? 'error.main' : 'text.disabled',
+                          }}
+                        >
+                          {status}
+                        </Typography>
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 );
               })}

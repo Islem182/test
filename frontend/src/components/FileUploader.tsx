@@ -59,7 +59,16 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   enableOcr = true,
 }) => {
   const theme = useTheme();
-  const [selectedType, setSelectedType] = useState<DocumentType>('CIN_COPY');
+  const [selectedType, setSelectedType] = useState<DocumentType>(
+    allowedTypes && allowedTypes.length > 0 ? allowedTypes[0] : 'CIN_COPY'
+  );
+
+  React.useEffect(() => {
+    if (allowedTypes && allowedTypes.length > 0 && !allowedTypes.includes(selectedType)) {
+      setSelectedType(allowedTypes[0]);
+    }
+  }, [allowedTypes]);
+
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [phase, setPhase] = useState<'idle' | 'uploading' | 'processing' | 'done' | 'error'>('idle');
   const [uploadedFile, setUploadedFile] = useState<DocumentItem | null>(null);

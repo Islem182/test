@@ -82,6 +82,32 @@ public class TextNormalizationService {
     }
 
     /**
+     * Remove Arabic definite article prefix (ال / AL / EL) for resilient name matching.
+     * e.g. "الطرابلسي" -> "طرابلسي", "ALTRABELSI" -> "TRABELSI", "EL MEJRI" -> "MEJRI".
+     */
+    public String stripAlPrefix(String name) {
+        if (name == null || name.isBlank()) return "";
+        String s = name.trim();
+        if (s.startsWith("ال") && s.length() > 3) {
+            return s.substring(2).trim();
+        }
+        String up = s.toUpperCase();
+        if (up.startsWith("AL ") && s.length() > 4) {
+            return s.substring(3).trim();
+        }
+        if (up.startsWith("EL ") && s.length() > 4) {
+            return s.substring(3).trim();
+        }
+        if (up.startsWith("AL") && s.length() > 5) {
+            return s.substring(2).trim();
+        }
+        if (up.startsWith("EL") && s.length() > 5) {
+            return s.substring(2).trim();
+        }
+        return s;
+    }
+
+    /**
      * Normalize a CIN or passport number.
      * Converts Arabic-Indic digits, uppercases Latin letters, strips all
      * whitespace and punctuation. Result is used for exact matching only.

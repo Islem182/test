@@ -130,7 +130,7 @@ export interface OcrVerificationResponse {
 // ── OCR Verification Report (Step 4) ─────────────────────────────────────────
 
 /** Status for a single extracted field. */
-export type OcrFieldStatus = 'VALID' | 'MISSING' | 'INVALID';
+export type OcrFieldStatus = 'MATCH' | 'MISMATCH' | 'NOT_FOUND' | 'VALID' | 'MISSING' | 'INVALID';
 
 /** Match status between two documents. */
 export type IdentityMatchStatus = 'MATCH' | 'POSSIBLE_MATCH' | 'MISMATCH' | 'UNABLE_TO_COMPARE';
@@ -140,9 +140,13 @@ export type OverallStatus = 'VALID' | 'INVALID' | 'PARTIAL';
 
 /** Single field result inside a document section. */
 export interface OcrFieldResult {
-  value: string | null;
+  fieldName?: string;
+  extractedValue?: string | null;
+  enteredValue?: string | null;
+  value?: string | null;
   status: OcrFieldStatus;
   message?: string;
+  confidence?: number;
 }
 
 /** CIN document verification section. */
@@ -150,8 +154,8 @@ export interface CinVerification {
   numeroCin: OcrFieldResult;
   nom: OcrFieldResult;
   prenom: OcrFieldResult;
-  adresse: OcrFieldResult;
-  documentStatus: OverallStatus;
+  adresse?: OcrFieldResult;
+  documentStatus: OverallStatus | string;
 }
 
 /** Passport document verification section. */
@@ -159,9 +163,9 @@ export interface PassportVerification {
   numeroPassport: OcrFieldResult;
   nom: OcrFieldResult;
   prenom: OcrFieldResult;
-  identityCompatibility: IdentityMatchStatus;
+  identityCompatibility: IdentityMatchStatus | string;
   compatibilityScore: number;
-  documentStatus: OverallStatus;
+  documentStatus: OverallStatus | string;
 }
 
 /** Certificat d'immatriculation verification section. */
@@ -171,7 +175,7 @@ export interface CertificatVerification {
   formeJuridique: OcrFieldResult;
   siegeSocial: OcrFieldResult;
   secteurActivite: OcrFieldResult;
-  documentStatus: OverallStatus;
+  documentStatus: OverallStatus | string;
 }
 
 /** Full structured verification report returned by POST /api/ocr/verify-documents. */
@@ -179,8 +183,9 @@ export interface OcrVerificationReport {
   cin: CinVerification;
   passport: PassportVerification;
   commercialRegistration: CertificatVerification;
-  overallStatus: OverallStatus;
-  identityConsistency: IdentityMatchStatus;
+  overallStatus: OverallStatus | string;
+  verified?: boolean;
+  identityConsistency: IdentityMatchStatus | string;
   summary: string;
 }
 

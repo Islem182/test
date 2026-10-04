@@ -40,6 +40,7 @@ import { FileUploader } from '../components/FileUploader';
 import { OcrResultsViewer } from '../components/OcrResultsViewer';
 import { FaceVerificationModal } from '../components/FaceVerificationModal';
 import { applicationService } from '../services/application.service';
+import { compareNumber, compareText, compareDate } from '../utils/ocrCompare';
 import type { DocumentItem, OcrVerificationResponse, CrossDocumentComparison, FieldComparison } from '../types';
 
 // ── Step labels ────────────────────────────────────────────────────────────
@@ -91,149 +92,110 @@ const DOC_SLOTS: DocSlot[] = [
 ];
 
 // ── Cross-document comparison helper ──────────────────────────────────────
-// Rules:
-//   CIN          → vérifie : N° CIN, Nom, Prénom, Adresse
-//   Passeport    → vérifie : N° Passeport, Nom, Prénom
-//                  Nom + Prénom DOIVENT correspondre à ceux de la CIN
-//   Certificat   → vérifie : Dénomination sociale, Forme juridique,
-//                             Siège social, Secteur d'activité,
-//                             Date de début d'activité
+// The values entered in Step 1 (Informations personnelles) and Step 2
+// (Activité commerciale) are the REFERENCE ("Valeur saisie"). Every OCR
+// field extracted from the 3 uploaded documents is checked against that
+// reference. Nom/Prénom on the passport are additionally cross-checked
+// against the CIN OCR for identity consistency.
+//
+//   CIN          → N° CIN, Nom, Prénom, Adresse            vs saisie
+//   Passeport    → N° Passeport, Nom, Prénom                vs saisie
+//                  + Nom/Prénom OCR Passeport vs OCR CIN (cohérence identité)
+//   Certificat   → Dénomination sociale, Forme juridique,
+//                  Siège social, Secteur d'activité,
+//                  Date de début d'activité                vs saisie
+
+interface CrossComparisonFormData {
+  firstName: string;
+  lastName: string;
+  cin: string;
+  passport: string;
+  businessName: string;
+  businessType: string;
+  businessAddress: string;
+  sector: string;
+  startDate: string;
+}
+
+function pushField(
+  fields: FieldComparison[],
+  label: string,
+  sourceALabel: string,
+  sourceA: string | undefined,
+  sourceBLabel: string,
+  sourceB: string | undefined,
+  status: FieldComparison['status'],
+) {
+  fields.push({ label, sourceA, sourceALabel, sourceB, sourceBLabel, status });
+}
 
 function buildCrossComparison(
   ocrCin: OcrVerificationResponse | null,
   ocrPassport: OcrVerificationResponse | null,
   ocrCertificat: OcrVerificationResponse | null,
-  formData: {
-    passport: string;
-    startDate: string;
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    businessType: string;
-    businessAddress: string;
-    sector: string;
-  },
+  formData: CrossComparisonFormData,
 ): CrossDocumentComparison {
   const fields: FieldComparison[] = [];
+  const SAISIE = 'Saisie formulaire';
 
-  // ── 1. Nom : CIN OCR vs Passeport OCR ─────────────────────────────────
-  const nomCin      = ocrCin?.extractedData?.lastName;
-  const nomPassport = ocrPassport?.extractedData?.lastName;
-  fields.push({
-    label: 'Nom',
-    sourceA: nomCin,
-    sourceALabel: 'OCR CIN',
-    sourceB: nomPassport,
-    sourceBLabel: 'OCR Passeport',
-    status: !nomCin || !nomPassport ? 'MISSING'
-          : nomCin.toLowerCase() === nomPassport.toLowerCase() ? 'MATCH'
-          : 'MISMATCH',
-  });
+  const cinExt       = ocrCin?.extractedData;
+  const passportExt  = ocrPassport?.extractedData;
+  const certExt      = ocrCertificat?.extractedData;
 
-  // ── 2. Prénom : CIN OCR vs Passeport OCR ──────────────────────────────
-  const prenomCin      = ocrCin?.extractedData?.firstName;
-  const prenomPassport = ocrPassport?.extractedData?.firstName;
-  fields.push({
-    label: 'Prénom',
-    sourceA: prenomCin,
-    sourceALabel: 'OCR CIN',
-    sourceB: prenomPassport,
-    sourceBLabel: 'OCR Passeport',
-    status: !prenomCin || !prenomPassport ? 'MISSING'
-          : prenomCin.toLowerCase() === prenomPassport.toLowerCase() ? 'MATCH'
-          : 'MISMATCH',
-  });
+  // ── CIN vs saisie ──────────────────────────────────────────────────────
+  const cinNumberCmp = compareNumber(formData.cin, cinExt?.cinNumber);
+  pushField(fields, 'N° CIN', SAISIE, formData.cin, 'OCR CIN', cinExt?.cinNumber, cinNumberCmp.status);
 
-  // ── 3. Dénomination sociale : saisie formulaire vs OCR Certificat ──────
-  const denomUser = formData.businessName?.trim() || undefined;
-  const denomOcr  = ocrCertificat?.extractedData?.companyName;
-  fields.push({
-    label: 'Dénomination sociale',
-    sourceA: denomUser,
-    sourceALabel: 'Saisie formulaire',
-    sourceB: denomOcr,
-    sourceBLabel: 'OCR Certificat',
-    status: !denomUser || !denomOcr ? 'MISSING'
-          : denomUser.toLowerCase() === denomOcr.toLowerCase() ? 'MATCH'
-          : 'MISMATCH',
-  });
+  const cinNomCmp = compareText(formData.lastName, cinExt?.lastName);
+  pushField(fields, 'Nom (CIN)', SAISIE, formData.lastName, 'OCR CIN', cinExt?.lastName, cinNomCmp.status);
 
-  // ── 4. Forme juridique : saisie formulaire vs OCR Certificat ───────────
-  const formeUser = formData.businessType?.trim() || undefined;
-  const formeOcr  = ocrCertificat?.extractedData?.businessType;
-  fields.push({
-    label: 'Forme juridique',
-    sourceA: formeUser,
-    sourceALabel: 'Saisie formulaire',
-    sourceB: formeOcr,
-    sourceBLabel: 'OCR Certificat',
-    status: !formeUser || !formeOcr ? 'MISSING'
-          : formeUser.toLowerCase() === formeOcr.toLowerCase() ? 'MATCH'
-          : 'MISMATCH',
-  });
+  const cinPrenomCmp = compareText(formData.firstName, cinExt?.firstName);
+  pushField(fields, 'Prénom (CIN)', SAISIE, formData.firstName, 'OCR CIN', cinExt?.firstName, cinPrenomCmp.status);
 
-  // ── 5. Siège social : saisie formulaire vs OCR Certificat ─────────────
-  const siegeUser = formData.businessAddress?.trim() || undefined;
-  const siegeOcr  = ocrCertificat?.extractedData?.address;
-  fields.push({
-    label: 'Siège social',
-    sourceA: siegeUser,
-    sourceALabel: 'Saisie formulaire',
-    sourceB: siegeOcr,
-    sourceBLabel: 'OCR Certificat',
-    status: !siegeUser || !siegeOcr ? 'MISSING'
-          : siegeUser.toLowerCase() === siegeOcr.toLowerCase() ? 'MATCH'
-          : 'MISMATCH',
-  });
+  // ── Passeport vs saisie ────────────────────────────────────────────────
+  const passportNumberCmp = compareNumber(formData.passport, passportExt?.passportNumber);
+  pushField(fields, 'N° Passeport', SAISIE, formData.passport, 'OCR Passeport', passportExt?.passportNumber, passportNumberCmp.status);
 
-  // ── 6. Secteur d'activité : saisie formulaire vs OCR Certificat ────────
-  const secteurUser = formData.sector?.trim() || undefined;
-  const secteurOcr  = ocrCertificat?.extractedData?.sector;
-  fields.push({
-    label: 'Secteur d\'activité',
-    sourceA: secteurUser,
-    sourceALabel: 'Saisie formulaire',
-    sourceB: secteurOcr,
-    sourceBLabel: 'OCR Certificat',
-    status: !secteurUser || !secteurOcr ? 'MISSING'
-          : secteurUser.toLowerCase() === secteurOcr.toLowerCase() ? 'MATCH'
-          : 'MISMATCH',
-  });
+  const passportNomCmp = compareText(formData.lastName, passportExt?.lastName);
+  pushField(fields, 'Nom (Passeport)', SAISIE, formData.lastName, 'OCR Passeport', passportExt?.lastName, passportNomCmp.status);
 
-  // ── 7. Date de début d'activité : saisie formulaire vs OCR Certificat ──
-  const regDateOcr = ocrCertificat?.extractedData?.registrationDate;
-  const startUser  = formData.startDate?.trim() || undefined;
-  fields.push({
-    label: 'Date de début d\'activité',
-    sourceA: startUser,
-    sourceALabel: 'Saisie formulaire',
-    sourceB: regDateOcr,
-    sourceBLabel: 'OCR Certificat',
-    status: !regDateOcr || !startUser ? 'MISSING'
-          : normalizeDate(regDateOcr) === normalizeDate(startUser) ? 'MATCH'
-          : 'MISMATCH',
-  });
+  const passportPrenomCmp = compareText(formData.firstName, passportExt?.firstName);
+  pushField(fields, 'Prénom (Passeport)', SAISIE, formData.firstName, 'OCR Passeport', passportExt?.firstName, passportPrenomCmp.status);
+
+  // ── Cohérence d'identité : Nom/Prénom OCR CIN vs OCR Passeport ─────────
+  const identityNomCmp = compareText(cinExt?.lastName, passportExt?.lastName);
+  pushField(fields, 'Cohérence Nom (CIN ↔ Passeport)', 'OCR CIN', cinExt?.lastName, 'OCR Passeport', passportExt?.lastName, identityNomCmp.status);
+
+  const identityPrenomCmp = compareText(cinExt?.firstName, passportExt?.firstName);
+  pushField(fields, 'Cohérence Prénom (CIN ↔ Passeport)', 'OCR CIN', cinExt?.firstName, 'OCR Passeport', passportExt?.firstName, identityPrenomCmp.status);
+
+  // ── Certificat / Activité commerciale vs saisie ────────────────────────
+  const denomCmp = compareText(formData.businessName, certExt?.companyName);
+  pushField(fields, 'Dénomination sociale', SAISIE, formData.businessName, 'OCR Certificat', certExt?.companyName, denomCmp.status);
+
+  const formeCmp = compareText(formData.businessType, certExt?.businessType);
+  pushField(fields, 'Forme juridique', SAISIE, formData.businessType, 'OCR Certificat', certExt?.businessType, formeCmp.status);
+
+  const siegeCmp = compareText(formData.businessAddress, certExt?.address, 70);
+  pushField(fields, 'Siège social', SAISIE, formData.businessAddress, 'OCR Certificat', certExt?.address, siegeCmp.status);
+
+  const secteurCmp = compareText(formData.sector, certExt?.sector);
+  pushField(fields, 'Secteur d\'activité', SAISIE, formData.sector, 'OCR Certificat', certExt?.sector, secteurCmp.status);
+
+  const dateCmp = compareDate(formData.startDate, certExt?.registrationDate);
+  pushField(fields, 'Date de début d\'activité', SAISIE, formData.startDate, 'OCR Certificat', certExt?.registrationDate, dateCmp.status);
 
   const allMatch = fields.every(f => f.status === 'MATCH');
   return { fields, allMatch };
-}
-
-/** Normalize date to YYYY-MM-DD for comparison */
-function normalizeDate(raw: string): string {
-  if (!raw) return '';
-  const dmyMatch = raw.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);
-  if (dmyMatch) return `${dmyMatch[3]}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}`;
-  return raw.trim();
 }
 
 // ── Status chip helper ─────────────────────────────────────────────────────
 
 function ComparisonStatusChip({ status }: { status: string }) {
   const props = {
-    MATCH:   { label: 'Correspondance', color: 'success' as const, icon: <CheckIcon fontSize="small" /> },
-    MISMATCH:{ label: 'Incohérence',    color: 'error'   as const, icon: <ErrorIcon fontSize="small" /> },
-    MISSING: { label: 'Manquant',       color: 'warning' as const, icon: <PendingIcon fontSize="small" /> },
-    PENDING: { label: 'En attente',     color: 'default' as const, icon: <PendingIcon fontSize="small" /> },
+    MATCH:     { label: 'MATCH',     color: 'success' as const, icon: <CheckIcon fontSize="small" /> },
+    MISMATCH:  { label: 'MISMATCH',  color: 'error'   as const, icon: <ErrorIcon fontSize="small" /> },
+    NOT_FOUND: { label: 'NOT_FOUND', color: 'warning' as const, icon: <PendingIcon fontSize="small" /> },
   }[status] ?? { label: status, color: 'default' as const, icon: null };
 
   return <Chip label={props.label} color={props.color} size="small" icon={props.icon} sx={{ fontWeight: 700 }} />;
@@ -288,8 +250,7 @@ export const NewApplication: React.FC = () => {
     ocrResults.cin,
     ocrResults.passport,
     ocrResults.certificat,
-    formData.passport,
-    formData.startDate,
+    formData,
   );
 
   // ── Handlers ─────────────────────────────────────────────────────────────

@@ -11,319 +11,812 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import java.util.*;
 
 /**
- * Verification engine for Step 4.
+ * Verification engine for online fiscal registration (immatriculation fiscale).
  *
- * Per-document rules
- * ──────────────────
- * CIN      → required: cinNumber, firstName, lastName, address
- * Passport → required: passportNumber, firstName, lastName
- *              + cross-check lastName+firstName vs CIN (fuzzy, Arabic/Latin aware)
- * Certificat → required: companyName (denominationSociale), businessType (formeJuridique),
- *                         address (siegeSocial), sector (secteurActivite),
- *                         registrationDate (dateDebutActivite)
+ * Steps & Documents:
+ * 1. CIN:
+ *    - Numéro CIN (8 chiffres)
+ *    - Nom
+ *    - Prénom
+ *    -> Compared with Step 1 user inputs.
  *
- * Normalization stack (delegates to existing services)
- * ─────────────────────────────────────────────────────
- *   - TextNormalizationService  : Arabic diacritics, Arabic-Indic digits, accents,
- *                                  case folding, whitespace collapsing
- *   - ArabicLatinTransliterator : Arabic ↔ Latin phonetic transliteration
- *   - LevenshteinDistance       : fuzzy similarity scoring
+ * 2. Passport:
+ *    - Numéro de passeport
+ *    - Nom
+ *    - Prénom
+ *    -> Passport number compared with Step 1.
+ *    -> Passport Nom/Prénom cross-checked for compatibility with CIN & Step 1 identity.
  *
- * Identity compatibility thresholds
- * ────────────────────────────────────
- *   ≥ 95  → MATCH
- *   70–94 → POSSIBLE_MATCH
- *   < 70  → MISMATCH
- *   (either value missing) → UNABLE_TO_COMPARE
+ * 3. Certificat d'immatriculation au registre du commerce:
+ *    - Date de début d'activité (startDate / registrationDate)
+ *    - Dénomination sociale (businessName / companyName)
+ *    - Forme juridique (businessType)
+ *    - Siège social (businessAddress / address)
+ *    - Secteur d'activité (sector)
+ *    -> Compared with Step 2 commercial activity inputs.
+ *
+ * Status returned for every field:
+ *   MATCH     — document value matches user input
+ *   MISMATCH  — document value differs from user input
+ *   NOT_FOUND — OCR could not find the field
+ *
+ * Final Result:
+ *   ✅ Documents vérifiés / informations cohérentes
+ *   ❌ Échec de la vérification / informations incohérentes
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OcrVerificationServiceImpl implements OcrVerificationService {
 
-    private final TextNormalizationService   normalizer;
-    private final ArabicLatinTransliterator  transliterator;
+    private final TextNormalizationService normalizer;
+    private final ArabicLatinTransliterator transliterator;
 
     private static final LevenshteinDistance LEV = LevenshteinDistance.getDefaultInstance();
 
-    // ── Status constants ───────────────────────────────────────────────────────
-    private static final String VALID              = "VALID";
-    private static final String MISSING            = "MISSING";
-    private static final String INVALID            = "INVALID";
-    private static final String MATCH              = "MATCH";
-    private static final String POSSIBLE_MATCH     = "POSSIBLE_MATCH";
-    private static final String MISMATCH           = "MISMATCH";
-    private static final String UNABLE_TO_COMPARE  = "UNABLE_TO_COMPARE";
-    private static final String DOC_VALID          = "VALID";
-    private static final String DOC_INVALID        = "INVALID";
-    private static final String DOC_PARTIAL        = "PARTIAL";
+    // ── Field status constants (Required) ────────────────────────────────────
+    public static final String MATCH     = "MATCH";
+    public static final String MISMATCH  = "MISMATCH";
+    public static final String NOT_FOUND = "NOT_FOUND";
 
-    // =========================================================================
-    // Public API
-    // =========================================================================
+    // ── Document & Report status constants ───────────────────────────────────
+    public static final String STATUS_VALID   = "VALID";
+    public static final String STATUS_INVALID = "INVALID";
+
+    // ── Verdict messages ─────────────────────────────────────────────────────
+    public static final String SUMMARY_VERIFIED = "✅ Documents vérifiés / informations cohérentes";
+    public static final String SUMMARY_FAILED   = "❌ Échec de la vérification / informations incohérentes";
 
     @Override
     public OcrVerificationReport buildReport(OcrVerifyDocumentsRequest request) {
-        Map<String, String> cinData      = request.getCinData();
-        Map<String, String> passportData = request.getPassportData();
-        Map<String, String> certData     = request.getCertificatData();
+        Map<String, String> cinData      = request.getCinData() != null ? request.getCinData() : Collections.emptyMap();
+        Map<String, String> passportData = request.getPassportData() != null ? request.getPassportData() : Collections.emptyMap();
+        Map<String, String> certData     = request.getCertificatData() != null ? request.getCertificatData() : Collections.emptyMap();
+        Map<String, String> userData     = request.getUserEnteredData() != null ? request.getUserEnteredData() : Collections.emptyMap();
 
-        // ── 1. CIN section ────────────────────────────────────────────────────
-        OcrFieldResult numeroCin = verifyDocNumber(cinData, "cinNumber",  "Numéro CIN (8 chiffres)");
-        OcrFieldResult cinNom    = verifyName     (cinData, "lastName",   "Nom");
-        OcrFieldResult cinPrenom = verifyName     (cinData, "firstName",  "Prénom");
-        OcrFieldResult cinAdresse= verifyAddress  (cinData, "address",    "Adresse");
+        // ─────────────────────────────────────────────────────────────────────
+        // 1. CIN Verification
+        // Extract only: Numéro CIN, Nom, Prénom
+        // Compare each extracted value with the corresponding value entered in Step 1
+        // ─────────────────────────────────────────────────────────────────────
+        String userCin       = getField(userData, "cin", "cinNumber", "numeroCin");
+        String userLastName  = getField(userData, "lastName", "nom");
+        String userFirstName = getField(userData, "firstName", "prenom");
 
-        String cinStatus = worstDocStatus(numeroCin, cinNom, cinPrenom, cinAdresse);
+        OcrFieldResult numeroCin = compareDocNumber(
+                getField(cinData, "cinNumber", "cin", "numeroCin"),
+                userCin,
+                "Numéro CIN"
+        );
+
+        OcrFieldResult cinNom = compareName(
+                getField(cinData, "lastName", "nom"),
+                userLastName,
+                "Nom"
+        );
+
+        OcrFieldResult cinPrenom = compareName(
+                getField(cinData, "firstName", "prenom"),
+                userFirstName,
+                "Prénom"
+        );
+
+        boolean cinAllMatch = MATCH.equals(numeroCin.getStatus())
+                && MATCH.equals(cinNom.getStatus())
+                && MATCH.equals(cinPrenom.getStatus());
+
+        String cinDocStatus = cinAllMatch ? STATUS_VALID : STATUS_INVALID;
 
         OcrVerificationReport.CinSection cinSection = OcrVerificationReport.CinSection.builder()
-                .numeroCin(numeroCin).nom(cinNom).prenom(cinPrenom).adresse(cinAdresse)
-                .documentStatus(cinStatus)
+                .numeroCin(numeroCin)
+                .nom(cinNom)
+                .prenom(cinPrenom)
+                .documentStatus(cinDocStatus)
                 .build();
 
-        // ── 2. Passport section ───────────────────────────────────────────────
-        OcrFieldResult numPassport    = verifyDocNumber(passportData, "passportNumber", "Numéro passeport");
-        OcrFieldResult passportNom    = verifyName     (passportData, "lastName",       "Nom");
-        OcrFieldResult passportPrenom = verifyName     (passportData, "firstName",      "Prénom");
+        // ─────────────────────────────────────────────────────────────────────
+        // 2. Passport Verification
+        // Extract: Numéro de passeport, Nom, Prénom
+        // At minimum, compare passport number with Step 1.
+        // Also verify that passport name/prénom are compatible with CIN name/prénom.
+        // ─────────────────────────────────────────────────────────────────────
+        String userPassport = getField(userData, "passport", "passportNumber", "numeroPassport");
 
-        // Cross-check CIN ↔ Passport identity
-        CompatResult nomCompat    = compareName(cinData.get("lastName"),  passportData.get("lastName"));
-        CompatResult prenomCompat = compareName(cinData.get("firstName"), passportData.get("firstName"));
-        CompatResult overall      = mergeCompat(nomCompat, prenomCompat);
+        OcrFieldResult numPassport = compareDocNumber(
+                getField(passportData, "passportNumber", "passport", "numeroPassport"),
+                userPassport,
+                "Numéro de passeport"
+        );
 
-        String passStatus = worstDocStatus(numPassport, passportNom, passportPrenom);
+        OcrFieldResult passNom = comparePassportName(
+                getField(passportData, "lastName", "nom"),
+                userLastName,
+                getField(cinData, "lastName", "nom"),
+                "Nom"
+        );
+
+        OcrFieldResult passPrenom = comparePassportName(
+                getField(passportData, "firstName", "prenom"),
+                userFirstName,
+                getField(cinData, "firstName", "prenom"),
+                "Prénom"
+        );
+
+        // Check compatibility between Passport and CIN / User identity
+        CompatResult nomCompat = compareNamesCrossScript(
+                getField(cinData, "lastName", "nom"),
+                getField(passportData, "lastName", "nom"),
+                userLastName
+        );
+        CompatResult prenomCompat = compareNamesCrossScript(
+                getField(cinData, "firstName", "prenom"),
+                getField(passportData, "firstName", "prenom"),
+                userFirstName
+        );
+        CompatResult overallCompat = mergeCompat(nomCompat, prenomCompat);
+
+        boolean passAllMatch = MATCH.equals(numPassport.getStatus())
+                && MATCH.equals(passNom.getStatus())
+                && MATCH.equals(passPrenom.getStatus())
+                && !MISMATCH.equals(overallCompat.status);
+
+        String passDocStatus = passAllMatch ? STATUS_VALID : STATUS_INVALID;
 
         OcrVerificationReport.PassportSection passSection = OcrVerificationReport.PassportSection.builder()
-                .numeroPassport(numPassport).nom(passportNom).prenom(passportPrenom)
-                .identityCompatibility(overall.status)
-                .compatibilityScore(overall.score)
-                .documentStatus(passStatus)
+                .numeroPassport(numPassport)
+                .nom(passNom)
+                .prenom(passPrenom)
+                .identityCompatibility(overallCompat.status)
+                .compatibilityScore(overallCompat.score)
+                .documentStatus(passDocStatus)
                 .build();
 
-        // ── 3. Certificat section ─────────────────────────────────────────────
-        OcrFieldResult dateDebut     = verifyGeneric(certData, "registrationDate", "Date de début d'activité");
-        OcrFieldResult denomination  = verifyGeneric(certData, "companyName",      "Dénomination sociale");
-        OcrFieldResult forme         = verifyGeneric(certData, "businessType",     "Forme juridique");
-        OcrFieldResult siege         = verifyAddress(certData, "address",          "Siège social");
-        OcrFieldResult secteur       = verifyGeneric(certData, "sector",           "Secteur d'activité");
+        // ─────────────────────────────────────────────────────────────────────
+        // 3. Certificat d'immatriculation au registre du commerce
+        // Extract commercial activity fields entered in Step 2:
+        // - Date de début d'activité
+        // - Dénomination sociale
+        // - Forme juridique
+        // - Siège social
+        // - Secteur d'activité
+        // ─────────────────────────────────────────────────────────────────────
+        String userStartDate       = getField(userData, "startDate", "registrationDate", "dateDebutActivite");
+        String userBusinessName    = getField(userData, "businessName", "companyName", "denominationSociale");
+        String userBusinessType    = getField(userData, "businessType", "formeJuridique");
+        String userBusinessAddress = getField(userData, "businessAddress", "address", "siegeSocial");
+        String userSector          = getField(userData, "sector", "secteurActivite");
 
-        // Accept alternative key names the OCR may use
-        if (MISSING.equals(secteur.getStatus()))
-            secteur = verifyGeneric(certData, "taxId",     "Secteur d'activité");
-        if (MISSING.equals(forme.getStatus()))
-            forme   = verifyGeneric(certData, "fiscalNumber", "Forme juridique");
+        OcrFieldResult dateDebut = compareDate(
+                getField(certData, "registrationDate", "startDate", "dateDebutActivite"),
+                userStartDate,
+                "Date de début d'activité"
+        );
 
-        String certStatus = worstDocStatus(dateDebut, denomination, forme, siege, secteur);
+        OcrFieldResult denomination = compareText(
+                getField(certData, "companyName", "businessName", "denominationSociale"),
+                userBusinessName,
+                "Dénomination sociale",
+                0.80
+        );
+
+        OcrFieldResult forme = compareBusinessType(
+                getField(certData, "businessType", "formeJuridique"),
+                userBusinessType,
+                "Forme juridique"
+        );
+
+        OcrFieldResult siege = compareAddress(
+                getField(certData, "address", "businessAddress", "siegeSocial"),
+                userBusinessAddress,
+                "Siège social"
+        );
+
+        OcrFieldResult secteur = compareSector(
+                getField(certData, "sector", "secteurActivite"),
+                userSector,
+                "Secteur d'activité"
+        );
+
+        boolean certAllMatch = MATCH.equals(dateDebut.getStatus())
+                && MATCH.equals(denomination.getStatus())
+                && MATCH.equals(forme.getStatus())
+                && MATCH.equals(siege.getStatus())
+                && MATCH.equals(secteur.getStatus());
+
+        String certDocStatus = certAllMatch ? STATUS_VALID : STATUS_INVALID;
 
         OcrVerificationReport.CertificatSection certSection = OcrVerificationReport.CertificatSection.builder()
-                .dateDebutActivite(dateDebut).denominationSociale(denomination)
-                .formeJuridique(forme).siegeSocial(siege).secteurActivite(secteur)
-                .documentStatus(certStatus)
+                .dateDebutActivite(dateDebut)
+                .denominationSociale(denomination)
+                .formeJuridique(forme)
+                .siegeSocial(siege)
+                .secteurActivite(secteur)
+                .documentStatus(certDocStatus)
                 .build();
 
-        // ── 4. Overall ────────────────────────────────────────────────────────
-        String overallStatus = computeOverall(cinStatus, passStatus, certStatus, overall.status);
-        String summary       = buildSummary(overallStatus, overall.status, cinStatus, passStatus, certStatus);
+        // ─────────────────────────────────────────────────────────────────────
+        // 4. Overall Evaluation & Final Result Banner
+        // ─────────────────────────────────────────────────────────────────────
+        boolean allVerified = cinAllMatch && passAllMatch && certAllMatch;
+        String overallStatus = allVerified ? STATUS_VALID : STATUS_INVALID;
+        String summary = allVerified ? SUMMARY_VERIFIED : SUMMARY_FAILED;
 
-        log.info("OCR verification report — cin={} passport={} cert={} identity={} overall={}",
-                cinStatus, passStatus, certStatus, overall.status, overallStatus);
+        log.info("OCR verification result: cin={} pass={} cert={} -> overall={}, verified={}",
+                cinDocStatus, passDocStatus, certDocStatus, overallStatus, allVerified);
 
         return OcrVerificationReport.builder()
-                .cin(cinSection).passport(passSection).commercialRegistration(certSection)
+                .cin(cinSection)
+                .passport(passSection)
+                .commercialRegistration(certSection)
                 .overallStatus(overallStatus)
-                .identityConsistency(overall.status)
+                .verified(allVerified)
+                .identityConsistency(overallCompat.status)
                 .summary(summary)
                 .build();
     }
 
     // =========================================================================
-    // Field verifiers
+    // Comparison Implementations
     // =========================================================================
 
-    /** Document number — must be non-blank after normalization. */
-    private OcrFieldResult verifyDocNumber(Map<String, String> data, String key, String label) {
-        String raw = data.get(key);
-        if (raw == null || raw.isBlank())
-            return missing(label + " non trouvé dans le document.");
-        String norm = normalizer.normalizeDocumentNumber(raw);
-        if (norm.isEmpty())
-            return fieldResult(null, INVALID, label + " extrait mais illisible.");
-        return valid(raw.trim());
+    /**
+     * Compare document number (CIN or Passport).
+     * Normalizes Arabic-Indic digits, converts to uppercase, strips whitespace & separators.
+     */
+    private OcrFieldResult compareDocNumber(String extracted, String entered, String label) {
+        if (isBlank(extracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(null)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " non détecté sur le document.")
+                    .build();
+        }
+
+        String normExtracted = normalizer.normalizeDocumentNumber(extracted);
+        String normEntered   = normalizer.normalizeDocumentNumber(entered);
+
+        if (normExtracted.isEmpty()) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " illisible sur le document.")
+                    .build();
+        }
+
+        if (isBlank(normEntered)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted)
+                    .enteredValue(entered)
+                    .status(MISMATCH)
+                    .message("Valeur non renseignée dans le formulaire.")
+                    .build();
+        }
+
+        boolean matches = normExtracted.equals(normEntered);
+        return OcrFieldResult.builder()
+                .fieldName(label)
+                .extractedValue(extracted.trim())
+                .enteredValue(entered.trim())
+                .status(matches ? MATCH : MISMATCH)
+                .message(matches ? "Concordance exacte." : "Différence détectée avec la valeur saisie.")
+                .build();
     }
 
-    /** Name field — tolerant of Arabic/Latin, diacritics, casing. */
-    private OcrFieldResult verifyName(Map<String, String> data, String key, String label) {
-        String raw = data.get(key);
-        if (raw == null || raw.isBlank())
-            return missing(label + " non trouvé dans le document.");
-        String norm = normalizer.normalizeName(raw);
-        if (norm.isEmpty())
-            return fieldResult(null, INVALID, label + " extrait mais illisible.");
-        return valid(raw.trim());
+    /**
+     * Compare name (Prénom / Nom).
+     * Handles French, Arabic, Latin representations, accents, diacritics, and transliteration.
+     */
+    private OcrFieldResult compareName(String extracted, String entered, String label) {
+        if (isBlank(extracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(null)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " non détecté sur le document.")
+                    .build();
+        }
+
+        if (isBlank(entered)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted.trim())
+                    .enteredValue(entered)
+                    .status(MISMATCH)
+                    .message("Valeur non renseignée dans le formulaire.")
+                    .build();
+        }
+
+        String normExtracted = normalizer.normalizeName(extracted);
+        String normEntered   = normalizer.normalizeName(entered);
+
+        if (normExtracted.isEmpty()) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " illisible.")
+                    .build();
+        }
+
+        int score = calculateNameSimilarity(normExtracted, normEntered);
+        boolean isMatch = score >= 80 || normExtracted.equalsIgnoreCase(normEntered);
+
+        return OcrFieldResult.builder()
+                .fieldName(label)
+                .extractedValue(extracted.trim())
+                .enteredValue(entered.trim())
+                .status(isMatch ? MATCH : MISMATCH)
+                .message(isMatch ? "Concordance confirmée (" + score + "%)." : "Incohérence détectée (" + score + "%).")
+                .build();
     }
 
-    /** Address — non-blank, any content accepted. */
-    private OcrFieldResult verifyAddress(Map<String, String> data, String key, String label) {
-        String raw = data.get(key);
-        if (raw == null || raw.isBlank())
-            return missing(label + " non trouvée dans le document.");
-        return valid(raw.trim());
+    /**
+     * Compare Passport Name (Nom / Prénom) with user input as reference AND verify consistency with CIN.
+     * Supports French, Arabic, English, accents, transliteration and cross-document verification.
+     * Returns MATCH, MISMATCH, or NOT_FOUND.
+     */
+    private OcrFieldResult comparePassportName(
+            String passExtracted,
+            String userEntered,
+            String cinExtracted,
+            String label) {
+        if (isBlank(passExtracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(null)
+                    .enteredValue(userEntered)
+                    .status(NOT_FOUND)
+                    .message(label + " non détecté sur le passeport.")
+                    .build();
+        }
+
+        if (isBlank(userEntered)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(passExtracted.trim())
+                    .enteredValue(userEntered)
+                    .status(MISMATCH)
+                    .message(label + " non renseigné dans le formulaire.")
+                    .build();
+        }
+
+        String normPass = normalizer.normalizeName(passExtracted);
+        String normUser = normalizer.normalizeName(userEntered);
+        String normCin  = isNotBlank(cinExtracted) ? normalizer.normalizeName(cinExtracted) : "";
+
+        // 1. Primary check: compare extracted passport name with user-entered reference value
+        int scoreUser = calculateNameSimilarity(normPass, normUser);
+        boolean userMatch = scoreUser >= 80 || normPass.equalsIgnoreCase(normUser);
+
+        // 2. Secondary check: verify consistency with CIN (cross-document check)
+        boolean cinConsistent = true;
+        int scoreCin = 100;
+        if (isNotBlank(normCin)) {
+            scoreCin = calculateNameSimilarity(normPass, normCin);
+            cinConsistent = scoreCin >= 75 || normPass.equalsIgnoreCase(normCin);
+        }
+
+        boolean isMatch = userMatch && cinConsistent;
+        String msg;
+        if (!userMatch) {
+            msg = "Incohérence entre le passeport et les informations saisies (" + scoreUser + "%).";
+        } else if (!cinConsistent) {
+            msg = "Le passeport correspond à la saisie mais diverge du " + label.toLowerCase() + " extrait de la CIN (" + scoreCin + "%).";
+        } else {
+            msg = "Concordance confirmée avec la saisie (" + scoreUser + "%)" + (isNotBlank(normCin) ? " et cohérent avec la CIN (" + scoreCin + "%)." : ".");
+        }
+
+        return OcrFieldResult.builder()
+                .fieldName(label)
+                .extractedValue(passExtracted.trim())
+                .enteredValue(userEntered.trim())
+                .status(isMatch ? MATCH : MISMATCH)
+                .message(msg)
+                .build();
     }
 
-    /** Generic text field — just checks presence. */
-    private OcrFieldResult verifyGeneric(Map<String, String> data, String key, String label) {
-        String raw = data.get(key);
-        if (raw == null || raw.isBlank())
-            return missing(label + " non trouvé dans le document.");
-        return valid(raw.trim());
+    /**
+     * Compare Date (e.g. date début d'activité).
+     * Normalizes DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD to canonical YYYY-MM-DD.
+     */
+    private OcrFieldResult compareDate(String extracted, String entered, String label) {
+        if (isBlank(extracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(null)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " non détectée sur le document.")
+                    .build();
+        }
+
+        if (isBlank(entered)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted.trim())
+                    .enteredValue(entered)
+                    .status(MISMATCH)
+                    .message("Date non renseignée dans le formulaire.")
+                    .build();
+        }
+
+        String normExtracted = normalizer.normalizeDate(extracted);
+        String normEntered   = normalizer.normalizeDate(entered);
+
+        boolean isMatch = normExtracted.equals(normEntered);
+
+        return OcrFieldResult.builder()
+                .fieldName(label)
+                .extractedValue(extracted.trim())
+                .enteredValue(entered.trim())
+                .status(isMatch ? MATCH : MISMATCH)
+                .message(isMatch ? "Dates identiques." : "Dates non concordantes.")
+                .build();
+    }
+
+    /**
+     * Compare generic text (Dénomination sociale, etc.) with normalized token overlap.
+     */
+    private OcrFieldResult compareText(String extracted, String entered, String label, double threshold) {
+        if (isBlank(extracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(null)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " non détectée sur le document.")
+                    .build();
+        }
+
+        if (isBlank(entered)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted.trim())
+                    .enteredValue(entered)
+                    .status(MISMATCH)
+                    .message("Valeur non renseignée dans le formulaire.")
+                    .build();
+        }
+
+        String cleanExtracted = cleanGeneralText(extracted);
+        String cleanEntered   = cleanGeneralText(entered);
+
+        if (cleanExtracted.equalsIgnoreCase(cleanEntered) ||
+                cleanExtracted.contains(cleanEntered) ||
+                cleanEntered.contains(cleanExtracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted.trim())
+                    .enteredValue(entered.trim())
+                    .status(MATCH)
+                    .message("Concordance validée.")
+                    .build();
+        }
+
+        int score = levSimilarity(cleanExtracted, cleanEntered);
+        boolean isMatch = (score / 100.0) >= threshold;
+
+        return OcrFieldResult.builder()
+                .fieldName(label)
+                .extractedValue(extracted.trim())
+                .enteredValue(entered.trim())
+                .status(isMatch ? MATCH : MISMATCH)
+                .message(isMatch ? "Concordance textuelle (" + score + "%)." : "Différence constatée.")
+                .build();
+    }
+
+    /**
+     * Compare Forme Juridique (SARL, SUARL, SA, etc.).
+     */
+    private OcrFieldResult compareBusinessType(String extracted, String entered, String label) {
+        if (isBlank(extracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(null)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " non détectée sur le document.")
+                    .build();
+        }
+
+        if (isBlank(entered)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted.trim())
+                    .enteredValue(entered)
+                    .status(MISMATCH)
+                    .message("Valeur non renseignée dans le formulaire.")
+                    .build();
+        }
+
+        String canExtracted = canonicalBusinessType(extracted);
+        String canEntered   = canonicalBusinessType(entered);
+
+        boolean isMatch = canExtracted.equals(canEntered) ||
+                cleanGeneralText(extracted).contains(cleanGeneralText(entered)) ||
+                cleanGeneralText(entered).contains(cleanGeneralText(extracted));
+
+        return OcrFieldResult.builder()
+                .fieldName(label)
+                .extractedValue(extracted.trim())
+                .enteredValue(entered.trim())
+                .status(isMatch ? MATCH : MISMATCH)
+                .message(isMatch ? "Forme juridique concordante." : "Forme juridique différente.")
+                .build();
+    }
+
+    /**
+     * Compare Siège Social (address) with tolerance for city / address tokens.
+     */
+    private OcrFieldResult compareAddress(String extracted, String entered, String label) {
+        if (isBlank(extracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(null)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " non détecté sur le document.")
+                    .build();
+        }
+
+        if (isBlank(entered)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted.trim())
+                    .enteredValue(entered)
+                    .status(MISMATCH)
+                    .message("Adresse non renseignée dans le formulaire.")
+                    .build();
+        }
+
+        String normExtracted = normalizer.normalizeAddress(extracted);
+        String normEntered   = normalizer.normalizeAddress(entered);
+
+        boolean isMatch = normExtracted.equalsIgnoreCase(normEntered) ||
+                normExtracted.contains(normEntered) ||
+                normEntered.contains(normExtracted);
+
+        if (!isMatch) {
+            // Check token overlap
+            Set<String> tokensExtracted = new HashSet<>(Arrays.asList(normExtracted.split("\\s+")));
+            Set<String> tokensEntered   = new HashSet<>(Arrays.asList(normEntered.split("\\s+")));
+            int common = 0;
+            for (String t : tokensEntered) {
+                if (t.length() >= 3 && tokensExtracted.contains(t)) common++;
+            }
+            if (!tokensEntered.isEmpty() && (double) common / tokensEntered.size() >= 0.50) {
+                isMatch = true;
+            }
+        }
+
+        return OcrFieldResult.builder()
+                .fieldName(label)
+                .extractedValue(extracted.trim())
+                .enteredValue(entered.trim())
+                .status(isMatch ? MATCH : MISMATCH)
+                .message(isMatch ? "Adresse concordante." : "Adresse non concordante.")
+                .build();
+    }
+
+    /**
+     * Compare Secteur d'activité.
+     */
+    private OcrFieldResult compareSector(String extracted, String entered, String label) {
+        if (isBlank(extracted)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(null)
+                    .enteredValue(entered)
+                    .status(NOT_FOUND)
+                    .message(label + " non détecté sur le document.")
+                    .build();
+        }
+
+        if (isBlank(entered)) {
+            return OcrFieldResult.builder()
+                    .fieldName(label)
+                    .extractedValue(extracted.trim())
+                    .enteredValue(entered)
+                    .status(MISMATCH)
+                    .message("Secteur non renseigné dans le formulaire.")
+                    .build();
+        }
+
+        String cleanExt = cleanGeneralText(extracted);
+        String cleanEnt = cleanGeneralText(entered);
+
+        boolean isMatch = cleanExt.equalsIgnoreCase(cleanEnt) ||
+                cleanExt.contains(cleanEnt) ||
+                cleanEnt.contains(cleanExt) ||
+                levSimilarity(cleanExt, cleanEnt) >= 70;
+
+        return OcrFieldResult.builder()
+                .fieldName(label)
+                .extractedValue(extracted.trim())
+                .enteredValue(entered.trim())
+                .status(isMatch ? MATCH : MISMATCH)
+                .message(isMatch ? "Secteur d'activité concordant." : "Secteur d'activité différent.")
+                .build();
     }
 
     // =========================================================================
-    // Name comparison — Arabic/Latin aware fuzzy matching
+    // Name comparison & Cross-Document Identity Compatibility
     // =========================================================================
 
     private record CompatResult(String status, int score) {}
 
-    /**
-     * Compare a single name token between CIN and Passport.
-     * Handles Arabic ↔ Latin via transliteration; uses Levenshtein similarity.
-     */
-    private CompatResult compareName(String cinName, String passportName) {
-        if (isBlank(cinName) || isBlank(passportName))
-            return new CompatResult(UNABLE_TO_COMPARE, 0);
+    private CompatResult compareNamesCrossScript(String cinName, String passportName, String userName) {
+        String targetPassport = isNotBlank(passportName) ? passportName.trim() : "";
+        String targetCin      = isNotBlank(cinName) ? cinName.trim() : "";
+        String targetUser     = isNotBlank(userName) ? userName.trim() : "";
 
-        String normCin  = normalizer.normalizeName(cinName);
-        String normPass = normalizer.normalizeName(passportName);
-
-        if (normCin.isEmpty() || normPass.isEmpty())
-            return new CompatResult(UNABLE_TO_COMPARE, 0);
-
-        boolean cinArabic  = transliterator.containsArabic(normCin);
-        boolean passArabic = transliterator.containsArabic(normPass);
-
-        int score;
-
-        if (cinArabic == passArabic) {
-            // Same script — direct Levenshtein
-            score = levSimilarity(normCin, normPass);
-        } else {
-            // Mixed scripts — transliterate both ways, take best
-            String arabicSide = cinArabic ? normCin  : normPass;
-            String latinSide  = cinArabic ? normPass : normCin;
-
-            int scoreAtoL = levSimilarity(transliterator.arabicToLatin(arabicSide), latinSide);
-
-            String normLatinAsArabic = normalizer.normalizeArabicLetters(
-                    normalizer.removeArabicDiacritics(transliterator.latinToArabic(latinSide)));
-            int scoreLtoA = levSimilarity(normLatinAsArabic, arabicSide);
-
-            score = Math.max(scoreAtoL, scoreLtoA);
-            log.debug("Cross-script name compare: arabicToLatin={} scoreAtoL={} scoreLtoA={}",
-                    transliterator.arabicToLatin(arabicSide), scoreAtoL, scoreLtoA);
+        if (isBlank(targetPassport)) {
+            return new CompatResult(NOT_FOUND, 0);
         }
 
-        String status = score >= 95 ? MATCH
-                      : score >= 70 ? POSSIBLE_MATCH
-                      : MISMATCH;
-        return new CompatResult(status, score);
+        String normPass = normalizer.normalizeName(targetPassport);
+
+        if (isNotBlank(targetCin)) {
+            String normCin = normalizer.normalizeName(targetCin);
+            int scoreCin = calculateNameSimilarity(normCin, normPass);
+            boolean cinMatch = scoreCin >= 75 || normCin.equalsIgnoreCase(normPass);
+
+            if (isNotBlank(targetUser)) {
+                String normUser = normalizer.normalizeName(targetUser);
+                int scoreUser = calculateNameSimilarity(normUser, normPass);
+                boolean userMatch = scoreUser >= 80 || normUser.equalsIgnoreCase(normPass);
+                String status = (cinMatch && userMatch) ? MATCH : MISMATCH;
+                return new CompatResult(status, Math.min(scoreCin, scoreUser));
+            }
+
+            return new CompatResult(cinMatch ? MATCH : MISMATCH, scoreCin);
+        }
+
+        if (isNotBlank(targetUser)) {
+            String normUser = normalizer.normalizeName(targetUser);
+            int scoreUser = calculateNameSimilarity(normUser, normPass);
+            return new CompatResult(scoreUser >= 80 ? MATCH : MISMATCH, scoreUser);
+        }
+
+        return new CompatResult(NOT_FOUND, 0);
     }
 
-    /** Merge two name field compatibility results into one (worst wins). */
+    private int calculateNameSimilarity(String normA, String normB) {
+        if (normA.isEmpty() && normB.isEmpty()) return 100;
+        if (normA.isEmpty() || normB.isEmpty()) return 0;
+        if (normA.equalsIgnoreCase(normB)) return 100;
+
+        // Substring / Token containment: e.g. "BEN SALEM" vs "BEN SALEM MOHAMED"
+        if (normA.contains(normB) || normB.contains(normA)) {
+            int shorterLen = Math.min(normA.length(), normB.length());
+            if (shorterLen >= 3) {
+                return 95;
+            }
+        }
+
+        // Token reordering check: "MOHAMED AMINE" vs "AMINE MOHAMED"
+        List<String> tokensA = Arrays.stream(normA.split("\\s+")).filter(s -> !s.isBlank()).toList();
+        List<String> tokensB = Arrays.stream(normB.split("\\s+")).filter(s -> !s.isBlank()).toList();
+        if (tokensA.size() > 1 && tokensA.size() == tokensB.size() && new HashSet<>(tokensA).equals(new HashSet<>(tokensB))) {
+            return 95;
+        }
+
+        // Handle mixed-script in either string (e.g. "TRABELSI الطرابلسي")
+        boolean aHasArabic = transliterator.containsArabic(normA);
+        boolean bHasArabic = transliterator.containsArabic(normB);
+        boolean aHasLatin = normA.matches(".*[A-ZÀ-ÿ].*");
+        boolean bHasLatin = normB.matches(".*[A-ZÀ-ÿ].*");
+
+        if (aHasArabic && aHasLatin) {
+            String aLatin = normA.replaceAll("[^\u0020-\u007EA-ZÀ-ÿ]", " ").replaceAll("\\s+", " ").trim();
+            String aArabic = normA.replaceAll("[^\u0600-\u06FF\u0750-\u077F\\s]", " ").replaceAll("\\s+", " ").trim();
+            int scoreLatin = aLatin.isEmpty() ? 0 : calculateNameSimilarity(aLatin, normB);
+            int scoreArabic = aArabic.isEmpty() ? 0 : calculateNameSimilarity(aArabic, normB);
+            return Math.max(scoreLatin, scoreArabic);
+        }
+
+        if (bHasArabic && bHasLatin) {
+            String bLatin = normB.replaceAll("[^\u0020-\u007EA-ZÀ-ÿ]", " ").replaceAll("\\s+", " ").trim();
+            String bArabic = normB.replaceAll("[^\u0600-\u06FF\u0750-\u077F\\s]", " ").replaceAll("\\s+", " ").trim();
+            int scoreLatin = bLatin.isEmpty() ? 0 : calculateNameSimilarity(normA, bLatin);
+            int scoreArabic = bArabic.isEmpty() ? 0 : calculateNameSimilarity(normA, bArabic);
+            return Math.max(scoreLatin, scoreArabic);
+        }
+
+        // Check stripped definite article prefix (ال / AL / EL)
+        String strippedA = normalizer.stripAlPrefix(normA);
+        String strippedB = normalizer.stripAlPrefix(normB);
+        int strippedScore = 0;
+        if (!strippedA.equals(normA) || !strippedB.equals(normB)) {
+            strippedScore = calculateNameSimilarity(strippedA, strippedB);
+        }
+
+        if (aHasArabic == bHasArabic) {
+            int lev = levSimilarity(normA, normB);
+            return Math.max(lev, strippedScore);
+        }
+
+        // Cross-script: transliterate Arabic to Latin and compare
+        String arabicSide = aHasArabic ? normA : normB;
+        String latinSide  = aHasArabic ? normB : normA;
+
+        String transliteratedLatin = transliterator.arabicToLatin(arabicSide);
+        int scoreAtoL = levSimilarity(transliteratedLatin, latinSide);
+
+        String reverseArabic = normalizer.normalizeArabicLetters(
+                normalizer.removeArabicDiacritics(transliterator.latinToArabic(latinSide))
+        );
+        int scoreLtoA = levSimilarity(reverseArabic, arabicSide);
+
+        int best = Math.max(scoreAtoL, scoreLtoA);
+        return Math.max(best, strippedScore);
+    }
+
     private CompatResult mergeCompat(CompatResult a, CompatResult b) {
-        if (UNABLE_TO_COMPARE.equals(a.status) && UNABLE_TO_COMPARE.equals(b.status))
-            return new CompatResult(UNABLE_TO_COMPARE, 0);
-        if (UNABLE_TO_COMPARE.equals(a.status)) return b;
-        if (UNABLE_TO_COMPARE.equals(b.status)) return a;
-
-        // Worst status of the two
-        String worst = worstCompatStatus(a.status, b.status);
         int avgScore = (a.score + b.score) / 2;
-        return new CompatResult(worst, avgScore);
-    }
-
-    private String worstCompatStatus(String a, String b) {
-        if (MISMATCH.equals(a)       || MISMATCH.equals(b))       return MISMATCH;
-        if (POSSIBLE_MATCH.equals(a) || POSSIBLE_MATCH.equals(b)) return POSSIBLE_MATCH;
-        return MATCH;
-    }
-
-    // =========================================================================
-    // Document + overall status helpers
-    // =========================================================================
-
-    private String worstDocStatus(OcrFieldResult... fields) {
-        boolean anyMissing  = false;
-        boolean anyInvalid  = false;
-        for (OcrFieldResult f : fields) {
-            if (MISSING.equals(f.getStatus()))  anyMissing = true;
-            if (INVALID.equals(f.getStatus()))  anyInvalid = true;
+        if (MISMATCH.equals(a.status) || MISMATCH.equals(b.status)) {
+            return new CompatResult(MISMATCH, avgScore);
         }
-        if (anyInvalid)  return DOC_INVALID;
-        if (anyMissing)  return DOC_PARTIAL;
-        return DOC_VALID;
-    }
-
-    private String computeOverall(String cinStatus, String passStatus,
-                                   String certStatus, String identityStatus) {
-        // Any INVALID document → overall INVALID
-        if (DOC_INVALID.equals(cinStatus)  || DOC_INVALID.equals(passStatus) ||
-            DOC_INVALID.equals(certStatus) || MISMATCH.equals(identityStatus))
-            return DOC_INVALID;
-
-        // All three fully valid + identity match → VALID
-        if (DOC_VALID.equals(cinStatus) && DOC_VALID.equals(passStatus) &&
-            DOC_VALID.equals(certStatus) &&
-            (MATCH.equals(identityStatus) || POSSIBLE_MATCH.equals(identityStatus)))
-            return DOC_VALID;
-
-        return DOC_PARTIAL;
-    }
-
-    private String buildSummary(String overall, String identity,
-                                 String cinStatus, String passStatus, String certStatus) {
-        if (DOC_VALID.equals(overall) && MATCH.equals(identity))
-            return "Tous les documents sont valides et les identités sont cohérentes.";
-        if (DOC_VALID.equals(overall) && POSSIBLE_MATCH.equals(identity))
-            return "Documents valides. Des variantes d'orthographe mineures ont été détectées entre la CIN et le passeport — révision agent recommandée.";
-        if (MISMATCH.equals(identity))
-            return "INCOHÉRENCE DÉTECTÉE : les noms de la CIN et du passeport ne correspondent pas. Révision obligatoire par un agent DGI.";
-        if (UNABLE_TO_COMPARE.equals(identity))
-            return "Vérification partielle : certains champs n'ont pas pu être extraits. Révision agent requise.";
-
-        StringBuilder sb = new StringBuilder("Vérification incomplète —");
-        if (!DOC_VALID.equals(cinStatus))    sb.append(" CIN: ").append(cinStatus).append(";");
-        if (!DOC_VALID.equals(passStatus))   sb.append(" Passeport: ").append(passStatus).append(";");
-        if (!DOC_VALID.equals(certStatus))   sb.append(" Certificat: ").append(certStatus).append(";");
-        sb.append(" Révision agent requise.");
-        return sb.toString();
+        if (NOT_FOUND.equals(a.status) && NOT_FOUND.equals(b.status)) {
+            return new CompatResult(NOT_FOUND, 0);
+        }
+        return new CompatResult(MATCH, avgScore);
     }
 
     // =========================================================================
-    // Utilities
+    // Normalization & Helper utilities
     // =========================================================================
+
+    private String canonicalBusinessType(String raw) {
+        if (raw == null) return "";
+        String s = cleanGeneralText(raw).toUpperCase();
+        if (s.contains("SUARL") || s.contains("S U A R L") || s.contains("UNIPERSONNELLE")) return "SUARL";
+        if (s.contains("SARL") || s.contains("S A R L")) return "SARL";
+        if (s.contains("S A") || s.equals("SA") || s.contains("ANONYME")) return "SA";
+        if (s.contains("PHYSIQUE") || s.contains("PATENTE") || s.contains("INDIVIDU")) return "PERSONNE_PHYSIQUE";
+        return s;
+    }
+
+    private String cleanGeneralText(String text) {
+        if (text == null) return "";
+        String s = normalizer.stripLatinAccents(text.trim());
+        s = s.replaceAll("[\\p{Punct}]", " ");
+        s = s.replaceAll("\\s+", " ").trim();
+        return s;
+    }
 
     private int levSimilarity(String a, String b) {
         if (a.isEmpty() && b.isEmpty()) return 100;
         if (a.isEmpty() || b.isEmpty()) return 0;
-        int dist   = LEV.apply(a, b);
+        int dist   = LEV.apply(a.toUpperCase(), b.toUpperCase());
         int maxLen = Math.max(a.length(), b.length());
         return (int) Math.round(100.0 * (1.0 - (double) dist / maxLen));
     }
 
-    private boolean isBlank(String s) { return s == null || s.isBlank(); }
-
-    private OcrFieldResult valid(String value) {
-        return OcrFieldResult.builder().value(value).status(VALID).build();
+    private String getField(Map<String, String> map, String... candidateKeys) {
+        if (map == null) return null;
+        for (String key : candidateKeys) {
+            String val = map.get(key);
+            if (val != null && !val.isBlank()) return val.trim();
+        }
+        return null;
     }
 
-    private OcrFieldResult missing(String message) {
-        return OcrFieldResult.builder().value(null).status(MISSING).message(message).build();
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
-    private OcrFieldResult fieldResult(String value, String status, String message) {
-        return OcrFieldResult.builder().value(value).status(status).message(message).build();
+    private boolean isNotBlank(String s) {
+        return !isBlank(s);
     }
 }

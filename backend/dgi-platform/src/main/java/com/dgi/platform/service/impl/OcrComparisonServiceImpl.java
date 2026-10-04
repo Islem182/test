@@ -143,8 +143,8 @@ public class OcrComparisonServiceImpl implements OcrComparisonService {
         String status = match ? MATCH : MISMATCH;
         String message = match ? null
                 : "Document number does not match. User entered: " + userVal
-                  + " — OCR extracted: " + ocrVal
-                  + ". An agent must verify the original document.";
+                + " — OCR extracted: " + ocrVal
+                + ". An agent must verify the original document.";
 
         return FieldComparisonResult.builder()
                 .fieldKey(field)
@@ -211,6 +211,22 @@ public class OcrComparisonServiceImpl implements OcrComparisonService {
                     arabicAsLatin, scoreA, scoreB);
         }
 
+        // Substring containment check: e.g. "BEN SALEM" vs "BEN SALEM MOHAMED"
+        if (normUser.contains(normOcr) || normOcr.contains(normUser)) {
+            int shorterLen = Math.min(normUser.length(), normOcr.length());
+            if (shorterLen >= 3) {
+                score = Math.max(score, 95);
+            }
+        }
+
+        // Definite article stripping (ال / AL / EL)
+        String strippedUser = normalizer.stripAlPrefix(normUser);
+        String strippedOcr  = normalizer.stripAlPrefix(normOcr);
+        if (!strippedUser.equals(normUser) || !strippedOcr.equals(normOcr)) {
+            int strippedScore = levenshteinSimilarity(strippedUser, strippedOcr);
+            score = Math.max(score, strippedScore);
+        }
+
         String status  = statusFromScore(score, false);
         String message = buildNameMessage(status, field, userVal, ocrVal, score);
 
@@ -240,8 +256,8 @@ public class OcrComparisonServiceImpl implements OcrComparisonService {
         String status = match ? MATCH : MISMATCH;
         String message = match ? null
                 : "Birth date does not match after format normalization. "
-                  + "User entered: " + userVal + " — OCR extracted: " + ocrVal
-                  + ". An agent must verify the original document.";
+                + "User entered: " + userVal + " — OCR extracted: " + ocrVal
+                + ". An agent must verify the original document.";
 
         return FieldComparisonResult.builder()
                 .fieldKey(field)
@@ -411,15 +427,15 @@ public class OcrComparisonServiceImpl implements OcrComparisonService {
             case MATCH -> null;
             case POSSIBLE_MATCH ->
                     "Name spelling variants detected (score " + score + "/100). "
-                    + "This may be a different romanization of the same name. "
-                    + "Agent review recommended to confirm identity.";
+                            + "This may be a different romanization of the same name. "
+                            + "Agent review recommended to confirm identity.";
             case MANUAL_REVIEW ->
                     "Significant name difference detected (score " + score + "/100). "
-                    + "OCR quality may be poor, or the names may differ. "
-                    + "Mandatory agent review required before proceeding.";
+                            + "OCR quality may be poor, or the names may differ. "
+                            + "Mandatory agent review required before proceeding.";
             default ->
                     "Names do not match after Arabic/Latin normalization (score " + score + "/100). "
-                    + "An authorized DGI agent must verify the original document.";
+                            + "An authorized DGI agent must verify the original document.";
         };
     }
 
@@ -428,13 +444,13 @@ public class OcrComparisonServiceImpl implements OcrComparisonService {
             case MATCH -> null;
             case POSSIBLE_MATCH ->
                     "Address partially matches (score " + score + "/100). "
-                    + "Minor formatting differences detected.";
+                            + "Minor formatting differences detected.";
             case MANUAL_REVIEW ->
                     "Address match is ambiguous (score " + score + "/100). "
-                    + "Agent should verify the address against the original document.";
+                            + "Agent should verify the address against the original document.";
             default ->
                     "Addresses do not match (score " + score + "/100). "
-                    + "An agent must verify the original document.";
+                            + "An agent must verify the original document.";
         };
     }
 
@@ -443,13 +459,13 @@ public class OcrComparisonServiceImpl implements OcrComparisonService {
             case MATCH -> "All " + compared + " compared field(s) matched successfully (score: " + score + "/100).";
             case POSSIBLE_MATCH ->
                     "Most fields matched but name spelling variants were detected (score: " + score + "/100). "
-                    + "Agent review is recommended.";
+                            + "Agent review is recommended.";
             case MANUAL_REVIEW ->
                     "One or more fields could not be confidently verified (score: " + score + "/100). "
-                    + "Mandatory agent review before approving this application.";
+                            + "Mandatory agent review before approving this application.";
             default ->
                     "One or more critical fields did not match (score: " + score + "/100). "
-                    + "An authorized DGI agent must verify the original document before proceeding.";
+                            + "An authorized DGI agent must verify the original document before proceeding.";
         };
         if (skipped > 0) {
             base += " (" + skipped + " field(s) were skipped due to missing data.)";
