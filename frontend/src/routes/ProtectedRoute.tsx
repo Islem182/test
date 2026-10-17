@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
   /** If "ADMIN", only the admin account can access. Omit for any authenticated user. */
-  requiredRole?: 'ADMIN' | 'TAXPAYER';
+  requiredRole?: 'ADMIN' | 'TAXPAYER' | 'AGENT';
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRole }) => {

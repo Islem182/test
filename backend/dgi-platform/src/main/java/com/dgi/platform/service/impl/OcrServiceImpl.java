@@ -85,6 +85,15 @@ public class OcrServiceImpl implements OcrService {
     private static final Pattern CIN_LABELED_PATTERN =
             Pattern.compile("(?i)(?:N°|N|CIN|Num[eé]ro|رقم|ب\\.?ت\\.?و|بطاقة\\s*تعريف|Carte)\\s*[:\\-./_\\s]*([0-9\u0660-\u0669]{8})");
 
+    // Labeled CIN with OCR letter→digit confusions e.g. "N° : O8765432"
+    private static final Pattern CIN_LABELED_NOISE_PATTERN =
+            Pattern.compile("(?i)(?:N°|N|CIN|Num[eé]ro|رقم|ب\\.?ت\\.?و|بطاقة\\s*تعريف|Carte)\\s*[:\\-./_\\s]*([A-Z0-9\u0660-\u0669]{8})");
+
+    // Loose CIN number scan: a digit-ish run possibly broken by spaces/dots/slashes
+    // or a mis-recognised letter. Reduced to pure digits then validated as exactly 8.
+    private static final Pattern CIN_LOOSE_PATTERN = Pattern.compile(
+            "(?<![0-9])(?:[0-9\u0660-\u0669]|[OoIlZSBGD])(?:[\\s./\\-]?[0-9\u0660-\u0669OoIlZSBGD]){6,15}(?![0-9])");
+
     // Numéro de passeport : 1-2 lettres + 6-9 chiffres ou 8-9 chiffres
     private static final Pattern PASSPORT_STANDALONE_PATTERN =
             Pattern.compile("\\b([A-Z]{1,2}[0-9]{6,9}|[0-9]{8,9})\\b");
@@ -126,6 +135,21 @@ public class OcrServiceImpl implements OcrService {
                     "(?:Nom(?:\\s+de\\s+famille)?|Last\\s+Name|Family\\s+Name|Surname|النسب|اللقب)" +
                             "\\s*[:\\-]?\\s*([A-ZÀÂÄÉÈÊËÎÏÔÙÛÜ\u0600-\u06FF][A-Za-zÀ-ÿ\u0600-\u06FF '\\-]{1,40})",
                     Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
+    // Same-line "label : value" capture used ONLY as a CIN fallback when the guarded
+    // line scanner (extractNameField) misses names because the card header
+    // ("بطاقة التعريف / CARTE D'IDENTITE") was OCR'd onto the same line as the labels.
+    private static final Pattern CIN_NOM_LABEL_VALUE = Pattern.compile(
+            "(?:اللقب|النسب|\\bNom\\b(?:\\s+de\\s+famille)?|\\bSurname\\b|\\bLast\\s*Name\\b)"
+                    + "[ \\t:/\\-]*\\(?(?:en\\s+\\p{L}{2,10})?\\)?[ \\t:/\\-]*"
+                    + "([\\p{L}][\\p{L}' \\-]{1,40})",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS);
+
+    private static final Pattern CIN_PRENOM_LABEL_VALUE = Pattern.compile(
+            "(?:الإسم|الاسم(?:\\s+الشخصي)?|\\bPr[ée]noms?\\b|\\bGiven\\s*names?\\b|\\bFirst\\s*names?\\b)"
+                    + "[ \\t:/\\-]*\\(?(?:en\\s+\\p{L}{2,10})?\\)?[ \\t:/\\-]*"
+                    + "([\\p{L}][\\p{L}' \\-]{1,40})",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS);
 
     // Adresse — labels FR / EN / AR
     private static final Pattern ADDRESS_PATTERN =
@@ -457,55 +481,116 @@ public class OcrServiceImpl implements OcrService {
         // 3. Prénom
         extractNameField(text, true).ifPresent(v -> f.put("firstName", v));
 
-        log.info("CIN extracted fields: cinNumber={}, lastName={}, firstName={}",
-                f.get("cinNumber"), f.get("lastName"), f.get("firstName"));
+        // 3b. CIN-only fallback — recover Nom/Prénom from the raw text when the
+        //     guarded line scanner missed them (e.g. the header "بطاقة التعريف /
+        //     CARTE D'IDENTITE" was OCR'd onto the same line as the name labels).
+        if (!f.containsKey("lastName") || !f.containsKey("firstName")) {
+            extractCinNamesFallback(text, f);
+        }
+
+        // 4. Adresse (domicile) — optional; many CIN layouts carry it in Arabic.
+        //    When absent the value simply stays out of the map and the UI shows NOT_FOUND.
+        findFirst(ADDRESS_PATTERN, text).ifPresent(v -> f.put("address", clean(v)));
+
+        log.info("CIN extracted fields: cinNumber={}, lastName={}, firstName={}, address={}",
+                f.get("cinNumber"), f.get("lastName"), f.get("firstName"), f.get("address"));
         return f;
     }
 
-    private Optional<String> extractCinNumber(String text) {
-        // 1. Labeled match first (e.g. "N° : 08765432", "CIN : 08765432", "رقم بطاقة التعريف : 08765432")
-        Matcher m1 = CIN_LABELED_PATTERN.matcher(text);
-        if (m1.find()) {
-            String raw = m1.group(1);
-            String norm = normalizer.convertArabicIndicToWestern(raw).replaceAll("\\D", "");
-            if (norm.length() == 8) return Optional.of(norm);
-        }
-
-        // 2. Labeled with OCR noise / letter substitutions e.g. "N° : O8765432"
-        Pattern labeledNoisePattern = Pattern.compile(
-                "(?i)(?:N°|N|CIN|Num[eé]ro|رقم|ب\\.?ت\\.?و|بطاقة\\s*تعريف|Carte)\\s*[:\\-./_\\s]*([A-Z0-9\u0660-\u0669]{8})"
-        );
-        Matcher mNoise = labeledNoisePattern.matcher(text);
-        if (mNoise.find()) {
-            String raw = mNoise.group(1).toUpperCase()
-                    .replace('O', '0')
-                    .replace('I', '1')
-                    .replace('L', '1')
-                    .replace('B', '8')
-                    .replace('S', '5')
-                    .replace('Z', '2');
-            String norm = normalizer.convertArabicIndicToWestern(raw).replaceAll("\\D", "");
-            if (norm.length() == 8) return Optional.of(norm);
-        }
-
-        // 3. Standalone 8 digits fallback
-        Matcher m2 = CIN_STANDALONE_PATTERN.matcher(text);
-        while (m2.find()) {
-            String raw = m2.group(1);
-            String norm = normalizer.convertArabicIndicToWestern(raw).replaceAll("\\D", "");
-            if (norm.length() == 8) {
-                return Optional.of(norm);
+    /**
+     * CIN-only name fallback. Runs a permissive same-line "label : value" capture
+     * that is NOT gated by the header-word guards used in {@code containsNomLabel}
+     * / {@code containsPrenomLabel}, so it still finds the names when the card
+     * title ("بطاقة التعريف" / "CARTE D'IDENTITE") shares a line with the label.
+     * Only fills fields the primary extractor left empty.
+     */
+    private void extractCinNamesFallback(String text, Map<String, String> f) {
+        if (!f.containsKey("lastName")) {
+            Matcher m = CIN_NOM_LABEL_VALUE.matcher(text);
+            while (m.find()) {
+                String val = cleanNameValue(m.group(1));
+                if (val != null && isValidName(val)) { f.put("lastName", val); break; }
             }
         }
+        if (!f.containsKey("firstName")) {
+            Matcher m = CIN_PRENOM_LABEL_VALUE.matcher(text);
+            while (m.find()) {
+                String val = cleanNameValue(m.group(1));
+                if (val != null && isValidName(val)) { f.put("firstName", val); break; }
+            }
+        }
+    }
 
-        // 4. Digits with spaces e.g. "08 765 432"
-        Matcher m3 = Pattern.compile("\\b(\\d{2}\\s+\\d{3}\\s+\\d{3})\\b").matcher(text);
-        if (m3.find()) {
-            String norm = m3.group(1).replaceAll("\\s+", "");
+    private Optional<String> extractCinNumber(String text) {
+        if (text == null || text.isBlank()) return Optional.empty();
+        String western = normalizer.convertArabicIndicToWestern(text);
+
+        // 1. Strict labeled — "N° : 08765432", "CIN : 08765432", "رقم بطاقة التعريف : 08765432"
+        Matcher labeled = CIN_LABELED_PATTERN.matcher(western);
+        if (labeled.find()) {
+            String norm = fixDocumentDigits(labeled.group(1));
             if (norm.length() == 8) return Optional.of(norm);
+        }
+
+        // 2. Labeled with OCR letter→digit confusion e.g. "N° : O8765432"
+        Matcher labeledNoise = CIN_LABELED_NOISE_PATTERN.matcher(western);
+        if (labeledNoise.find()) {
+            String norm = fixDocumentDigits(labeledNoise.group(1));
+            if (norm.length() == 8) return Optional.of(norm);
+        }
+
+        // 3. Standalone contiguous 8 digits
+        Matcher standalone = CIN_STANDALONE_PATTERN.matcher(western);
+        while (standalone.find()) {
+            String norm = fixDocumentDigits(standalone.group(1));
+            if (norm.length() == 8) return Optional.of(norm);
+        }
+
+        // 4. Loose scan — digits possibly broken by spaces/dots/slashes or a
+        //    mis-recognised letter (e.g. "0 8 7 6 5 4 3 2", "08.76.54.32",
+        //    "O876S432"). Accept the first candidate that reduces to EXACTLY
+        //    8 digits and is predominantly numeric (>= 6 real digits), which
+        //    avoids false positives from dates / longer reference numbers.
+        Matcher loose = CIN_LOOSE_PATTERN.matcher(western);
+        while (loose.find()) {
+            String raw = loose.group();
+            long realDigits = raw.chars().filter(c -> c >= '0' && c <= '9').count();
+            String norm = fixDocumentDigits(raw);
+            if (norm.length() == 8 && realDigits >= 6 && !looksLikeDate(norm)) return Optional.of(norm);
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Guard for the loose CIN scan: an 8-digit run that reads cleanly as a
+     * DD/MM/YYYY date (valid day, month 1-12, plausible year) is almost always
+     * a birth/issue/expiry date, not a Tunisian CIN number. Reject those.
+     */
+    private boolean looksLikeDate(String d8) {
+        if (d8 == null || d8.length() != 8) return false;
+        try {
+            int dd = Integer.parseInt(d8.substring(0, 2));
+            int mm = Integer.parseInt(d8.substring(2, 4));
+            int yyyy = Integer.parseInt(d8.substring(4, 8));
+            return dd >= 1 && dd <= 31 && mm >= 1 && mm <= 12 && yyyy >= 1900 && yyyy <= 2100;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Reduce a raw OCR number fragment to pure Western digits, repairing the most
+     * common letter↔digit mis-reads (O/D→0, I/L→1, T→7, Z→2, S→5, B→8, G→6).
+     */
+    private String fixDocumentDigits(String raw) {
+        if (raw == null) return "";
+        String up = normalizer.convertArabicIndicToWestern(raw).toUpperCase(Locale.ROOT);
+        up = up.replace('O', '0').replace('D', '0')
+               .replace('I', '1').replace('L', '1').replace('T', '7')
+               .replace('Z', '2')
+               .replace('S', '5').replace('B', '8').replace('G', '6');
+        return up.replaceAll("[^0-9]", "");
     }
 
     // ── Passport ─────────────────────────────────────────────────────────────

@@ -196,7 +196,7 @@ function ComparisonStatusChip({ status }: { status: string }) {
     MATCH:     { label: 'MATCH',     color: 'success' as const, icon: <CheckIcon fontSize="small" /> },
     MISMATCH:  { label: 'MISMATCH',  color: 'error'   as const, icon: <ErrorIcon fontSize="small" /> },
     NOT_FOUND: { label: 'NOT_FOUND', color: 'warning' as const, icon: <PendingIcon fontSize="small" /> },
-  }[status] ?? { label: status, color: 'default' as const, icon: null };
+  }[status] ?? { label: status, color: 'default' as const, icon: undefined };
 
   return <Chip label={props.label} color={props.color} size="small" icon={props.icon} sx={{ fontWeight: 700 }} />;
 }
@@ -279,22 +279,12 @@ export const NewApplication: React.FC = () => {
       setDocItems(prev  => ({ ...prev, [slotKey]: doc }));
       setOcrResults(prev => ({ ...prev, [slotKey]: result ?? null }));
 
-      // Auto-fill form from OCR extracted data
-      if (result?.extractedData) {
-        const ext = result.extractedData;
-        setFormData(prev => ({
-          ...prev,
-          firstName:  ext.firstName        || prev.firstName,
-          lastName:   ext.lastName         || prev.lastName,
-          cin:        ext.cinNumber        || prev.cin,
-          passport:   ext.passportNumber   || prev.passport,
-          address:    ext.address          || prev.address,
-          // Certificat — pre-fill business info
-          businessName: ext.companyName    || prev.businessName,
-          businessType: ext.businessType   || prev.businessType,
-          startDate:    ext.registrationDate ? toInputDate(ext.registrationDate) : prev.startDate,
-        }));
-      }
+      // IMPORTANT — the values entered by the user in Step 1 / Step 2 are the
+      // REFERENCE that OCR is verified against. We must NEVER copy the
+      // OCR-extracted values back into formData, otherwise the comparison in
+      // Step 4 would check "OCR vs OCR" and always report MATCH, hiding every
+      // real mismatch (e.g. user typed "Mohamed" but the CIN shows "Ahmed").
+      // So we deliberately do NOT auto-fill formData from result.extractedData.
     };
 
   const handleSubmit = async () => {
@@ -546,6 +536,8 @@ export const NewApplication: React.FC = () => {
                         businessType:    formData.businessType,
                         startDate:       formData.startDate,
                         companyName:     formData.businessName,
+                        businessAddress: formData.businessAddress,
+                        sector:          formData.sector,
                       }}
                     />
                   </Grid>
@@ -756,13 +748,3 @@ export const NewApplication: React.FC = () => {
     </Box>
   );
 };
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Convert OCR date string (DD/MM/YYYY) to HTML date input format (YYYY-MM-DD) */
-function toInputDate(raw: string): string {
-  if (!raw) return '';
-  const m = raw.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);
-  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-  return raw;
-}

@@ -31,6 +31,8 @@ export interface UserProfile {
   address?: string;
   profilePicture?: string;
   fiscalNumber?: string;
+  /** Linked taxpayer record id (used by mock/demo data). */
+  taxpayerId?: number;
 }
 
 export interface JwtResponse {
@@ -73,7 +75,9 @@ export interface DocumentItem {
 
 export interface TaxApplication {
   id: number;
-  userId: number;
+  userId?: number;
+  /** Alias used by mock/demo data. */
+  taxpayerId?: number;
   taxpayerName: string;
   status: ApplicationStatus;
   createdDate: string;
@@ -84,8 +88,11 @@ export interface TaxApplication {
 
 export interface Complaint {
   id: number;
-  userId: number;
-  userName: string;
+  userId?: number;
+  /** Alias used by mock/demo data. */
+  taxpayerId?: number;
+  userName?: string;
+  taxpayerName?: string;
   subject: string;
   message: string;
   status: ComplaintStatus;
@@ -191,7 +198,7 @@ export interface OcrVerificationReport {
 
 // ── Cross-document comparison (legacy — used by NewApplication comparison table) ──
 
-export type ComparisonStatus = 'MATCH' | 'MISMATCH' | 'PENDING' | 'MISSING';
+export type ComparisonStatus = 'MATCH' | 'MISMATCH' | 'NOT_FOUND' | 'PENDING' | 'MISSING';
 
 export interface FieldComparison {
   label: string;

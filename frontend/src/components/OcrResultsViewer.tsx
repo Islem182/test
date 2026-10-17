@@ -46,8 +46,8 @@ interface UserEnteredData {
 }
 
 interface OcrResultsViewerProps {
-  /** Real OCR result from the backend. Null while loading. */
-  ocrResult: OcrVerificationResponse | null;
+  /** Real OCR result from the backend. Null/undefined while loading or when not yet available. */
+  ocrResult?: OcrVerificationResponse | null;
   /** Whether the OCR call is currently in-flight. */
   loading?: boolean;
   /** User-entered form data to compare against extracted values. */
